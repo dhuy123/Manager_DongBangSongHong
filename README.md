@@ -16,7 +16,6 @@ ranhgioi1/
 │   │   ├── controllers/   # Controller xử lý request
 │   │   ├── models/        # Model kết nối CSDL (PostgreSQL + PostGIS)
 │   │   ├── routes/        # Router định nghĩa API
-│   │   ├── services/      # Business logic
 │   │   └── app.js         # File khởi động backend
 │   ├── package.json
 │   └── .env               # Thông tin kết nối DB

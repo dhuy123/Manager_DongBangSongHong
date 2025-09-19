@@ -1,0 +1,9 @@
+# Node.js
+node_modules/
+.env
+dist/
+
+frontend/src/assets/img/movie2.m4v
+*.m4v
+*.rar
+

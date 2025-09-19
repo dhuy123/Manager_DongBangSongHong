@@ -9,9 +9,10 @@ Dự án áp dụng mô hình **MVC** để dễ dàng phát triển và bảo t
 
 ```bash
 ranhgioi1/
-│
+|
 ├── backend/               # Backend (Node.js + Express + PostgreSQL)
 │   ├── src/
+|   |   ├── config/        # Cấu hình kết nối DB 
 │   │   ├── controllers/   # Controller xử lý request
 │   │   ├── models/        # Model kết nối CSDL (PostgreSQL + PostGIS)
 │   │   ├── routes/        # Router định nghĩa API

@@ -9,7 +9,6 @@ const pool = new Pool({
   database: process.env.DB_NAME,
 });
 
-
 // Kiểm tra kết nối
 const connectDB = async () => {
 

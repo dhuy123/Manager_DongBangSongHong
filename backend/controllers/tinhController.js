@@ -10,6 +10,34 @@ const getAllTinh = async (req, res) => {
   }
 }
 
+const getPaginatedTinh = async (req, res) => {
+  const { page = 1, limit = 10 } = req.query;
+  try {
+    const result = await tinhModel.getPaginationTinh(parseInt(page), parseInt(limit));
+    res.status(200).json(result);
+  } catch (error) {
+    console.error("lỗi tạo phân trang:", error);
+    res.status(500).json({ message: "Lỗi máy chủ", error: error.message });
+  }
+}
+
+const searchTinh = async (req, res) => {
+  try {
+    const query = req.query.query;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    console.log("🔍 Từ khóa tìm kiếm:", query);
+    if (!query) {
+      return res.status(400).json({ message: "Thiếu từ khóa tìm kiếm" });
+    }
+    const result = await tinhModel.searchTinh(query, page, limit);
+    res.status(200).json(result);
+  } catch (error) {
+    console.error("Error searching province:", error);
+    res.status(500).json({ message: "Lỗi máy chủ", error: error.message });
+  }
+};
+
 const getTinhById = async (req, res) => {
   const { id } = req.params;
   try {
@@ -24,15 +52,27 @@ const getTinhById = async (req, res) => {
 const updateTinh = async (req, res) => {
   const { id } = req.params;
   const data = req.body;
-  console.log("Dữ liệu gửi lên:", data);
+
+  console.log("📦 Body nhận được:", data);
+
+  if (!data || Object.keys(data).length === 0) {
+    return res.status(400).json({ message: "❌ Không có dữ liệu gửi lên!" });
+  }
+
   try {
     const updatedTinh = await tinhModel.updateTinh(id, data);
-    res.status(200).json(updatedTinh);
+    console.log("✅ Dữ liệu cập nhật:", updatedTinh);
+
+    res.status(200).json({
+      message: "Cập nhật thành công",
+      du_lieu_moi: updatedTinh
+    });
   } catch (error) {
     console.error("Error updating province:", error);
     res.status(500).json({ message: "Lỗi máy chủ", error: error.message });
   }
-}
+};
+
 const deleteTinh = async (req, res) => {
   const { id } = req.params;
   try {
@@ -48,5 +88,7 @@ module.exports = {
   getAllTinh,
   getTinhById,
   updateTinh,
-  deleteTinh
+  deleteTinh,
+  getPaginatedTinh,
+  searchTinh,
 }

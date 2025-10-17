@@ -6,6 +6,7 @@ require('dotenv').config();
 
 const userRoutes = require('./routers/userRouter');
 const tinhRoutes = require('./routers/tinhRouters');
+const imgTinhRoutes = require('./routers/imgTinhRouters');
 const accountRoutes = require('./routers/accountRouters');
 
 app.use(cors());
@@ -14,6 +15,7 @@ app.use(express.urlencoded({ extended: true }));
 
 
 app.use('/api/tinh', tinhRoutes);
+app.use('/api/img_tinh', imgTinhRoutes);
 app.use('/api/account', accountRoutes);
 app.use('/api/login', userRoutes);
 

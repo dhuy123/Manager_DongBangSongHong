@@ -24,6 +24,7 @@ const getImgTinhByMaTinh = async (req, res) => {
 
 const getImgTinhById = async (req, res) => {
   const { id } = req.params;
+  console.log(" id:", id);
   try {
     const imgTinh = await imgTinhModel.getImgTinhById(id);
     res.status(200).json(imgTinh);

@@ -3,8 +3,8 @@ const imgTinhController = require('../controllers/imgTinhController');
 const express = require('express');
 const router = express.Router();
 
-router.get('/:id', imgTinhController.getImgTinhById);
-router.get('/:ma_tinh', imgTinhController.getImgTinhByMaTinh);
+router.get('/ma_tinh/:ma_tinh', imgTinhController.getImgTinhByMaTinh);
+router.get('/id/:id', imgTinhController.getImgTinhById);
 router.post('/', imgTinhController.createImgTinh);
 router.put('/:id', imgTinhController.updateImgTinh);
 router.delete('/:id', imgTinhController.deleteImgTinh);

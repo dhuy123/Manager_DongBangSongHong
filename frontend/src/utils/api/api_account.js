@@ -1,13 +1,46 @@
 import { apiInstance } from "../api/api_config";
 
-export const getAllAccount = async () => {
+// export const getAllAccount = async () => {
+//     try {
+//         const response = await apiInstance.get('/account');
+//         console.log("Danh sách tài khoản:", response.data);
+//         return response.data; // Trả về danh sách tất cả các tài khoản
+//     } catch (error) {
+//         console.error("Error fetching all accounts:", error);
+//         throw new Error("Lỗi khi lấy danh sách tài khoản");
+//     }
+// }
+
+export const getPaginatedAccount = async (page = 1, limit = 10) => {
     try {
-        const response = await apiInstance.get('/account');
-        console.log("Danh sách tài khoản:", response.data);
-        return response.data; // Trả về danh sách tất cả các tài khoản
+        const response = await apiInstance.get('/account', {
+            params: {
+                _page: page,
+                _limit: limit
+            }
+        });
+        console.log("Danh sách tài khoản phân trang:", response.data);
+        return response.data;
     } catch (error) {
-        console.error("Error fetching all accounts:", error);
-        throw new Error("Lỗi khi lấy danh sách tài khoản");
+        console.error("Error fetching paginated accounts:", error);
+        throw new Error("Lỗi khi lấy danh sách tài khoản phân trang");
+    }
+}
+
+export const searchAccount = async (query, page = 1, limit = 10) => {
+    try {
+        const response = await apiInstance.get('/account/search', {
+            params: {
+                q: query,
+                _page: page,
+                _limit: limit
+            }
+        });
+        console.log("Kết quả tìm kiếm tài khoản:", response.data);
+        return response.data;
+    } catch (error) {
+        console.error("Error searching accounts:", error);
+        throw new Error("Lỗi khi tìm kiếm tài khoản");
     }
 }
 
@@ -54,5 +87,30 @@ export const deleteAccountAPI = async (id) => {
     } catch (error) {
         console.error("Error deleting account:", error);
         throw new Error("Lỗi khi xoá thông tin tài khoản");
+    }
+}
+
+// Lấy tất cả tài khoản (không phân trang)
+export const getAllAccount = async () => {
+    console.log('Bắt đầu lấy tất cả tài khoản');
+    try {
+        const response = await apiInstance.get('/account/all');
+        console.log('Danh sách tài khoản (all):', response.data);
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching all accounts:', error);
+        throw new Error('Lỗi khi lấy danh sách tài khoản');
+    }
+}
+
+// Lấy tất cả kết quả tìm kiếm (không phân trang)
+export const searchAccountAll = async (query) => {
+    try {
+        const response = await apiInstance.get('/account/search/all', { params: { query } });
+        console.log('Kết quả tìm kiếm tài khoản (all):', response.data);
+        return response.data;
+    } catch (error) {
+        console.error('Error searching accounts (all):', error);
+        throw new Error('Lỗi khi lấy tất cả kết quả tìm kiếm tài khoản');
     }
 }

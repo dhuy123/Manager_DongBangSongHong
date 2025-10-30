@@ -1,7 +1,7 @@
 // src/api/apiConfig.js
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:3000/api'; // Định nghĩa URL API
+const API_BASE_URL = 'http://localhost:5000/api'; // Định nghĩa URL API
 
 //  const API_BASE_URL = 'https://048abb8bd81b.ngrok-free.app/api';
 

@@ -167,10 +167,37 @@ const deleteHuyen = async (id) => {
   }
 };
 
+// Tìm kiếm trả về tất cả kết quả khớp (không phân trang)
+const searchHuyenAll = async (query) => {
+  try {
+    const keyword = `%${query}%`;
+    const result = await db.query(`
+      SELECT h.*, t.ten_tinh, t.quoc_gia FROM "huyen" h
+      JOIN tinh t ON h.ma_tinh = t.ma_tinh
+      WHERE
+      CAST (h.ma_huyen AS TEXT) ILIKE $1 OR
+      h.ten_huyen ILIKE $1 OR
+      h.cap_hanh_chinh ILIKE $1 OR
+      h.mo_ta ILIKE $1 OR
+      CAST (h.ma_tinh AS TEXT) ILIKE $1 OR
+      CAST (h.dan_so AS TEXT) ILIKE $1 OR
+      CAST (h.dien_tich AS TEXT) ILIKE $1 OR
+      t.ten_tinh ILIKE $1 OR
+      t.quoc_gia ILIKE $1
+    `, [keyword]);
+
+    return result.rows;
+  } catch (error) {
+    console.error("lỗi tìm kiếm huyện (all):", error);
+    throw new Error("Database error");
+  }
+};
+
 module.exports = {
   getAllHuyen,
   getPaginationHuyen,
   searchHuyen,
+  searchHuyenAll,
   getHuyenById,
   updateHuyen,
   deleteHuyen

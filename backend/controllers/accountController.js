@@ -24,7 +24,7 @@ const getPaginatedAccount = async (req, res) => {
 
 const searchAccount = async (req, res) => {
     try {
-        const query = req.query.query;
+        const query = req.query.q;
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 10;
         console.log("🔍 Từ khóa tìm kiếm:", query)
@@ -37,6 +37,22 @@ const searchAccount = async (req, res) => {
         console.error("Error searching accounts:", error);
         res.status(500).json({ message: "Lỗi máy chủ", error: error.message });
     }   
+};
+
+// Trả về tất cả kết quả tìm kiếm (không phân trang) để xuất
+const searchAccountAll = async (req, res) => {
+    try {
+        const query = req.query.query;
+        console.log("🔍 Từ khóa tìm kiếm (all):", query);
+        if (!query) {
+            return res.status(400).json({ message: "Thiếu từ khóa tìm kiếm" });
+        }
+        const result = await accountModel.searchAccountAll(query);
+        res.status(200).json(result);
+    } catch (error) {
+        console.error("Error searching accounts (all):", error);
+        res.status(500).json({ message: "Lỗi máy chủ", error: error.message });
+    }
 };
 
 const getAccountById = async (req, res) => {
@@ -89,9 +105,10 @@ const deleteAccount = async (req, res) => {
 }
 
 module.exports = {
-    //getAllAccount,
+    getAllAccount,
     getPaginatedAccount,
     searchAccount,
+    searchAccountAll,
     getAccountById,
     createAccount,
     updateAccount,

@@ -1,17 +1,16 @@
 import { apiInstance } from "../api/api_config";
 
-// export const getAllTinh = async () => {
-//     try {
-//         const response = await apiInstance.get('/tinh');
-//           console.log("Danh sách tỉnh:", response.data);
-//           console.log("👉 Base URL API:", apiInstance.defaults.baseURL);
-//         return response.data; // Trả về danh sách tất cả các tỉnh
-      
-//     } catch (error) {
-//         console.error("Error fetching all provinces:", error);
-//         throw new Error("Lỗi khi lấy danh sách tỉnh");
-//     }
-// }
+export const getAllTinh = async () => {
+    try {
+        // New backend route /tinh/all returns full list (no pagination)
+        const response = await apiInstance.get('/tinh/all');
+        console.log("Danh sách tỉnh (all):", response.data);
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching all provinces:", error);
+        throw new Error("Lỗi khi lấy danh sách tỉnh");
+    }
+}
 
 export const getPaginatedTinh= async (page = 1, limit = 10) => {
   try {
@@ -79,6 +78,20 @@ export const searchTinh = async (query, page = 1, limit = 10) => {
     } catch (error) {
         console.error("Error searching provinces:", error);
         throw new Error("Lỗi khi tìm kiếm tỉnh");
+    }
+}
+
+// Lấy tất cả kết quả tìm kiếm (không phân trang) để xuất CSV/PDF
+export const searchTinhAll = async (query) => {
+    try {
+        const response = await apiInstance.get('/tinh/search/all', {
+            params: { query }
+        });
+        console.log("Kết quả tìm kiếm tỉnh (all):", response.data);
+        return response.data;
+    } catch (error) {
+        console.error("Error searching provinces (all):", error);
+        throw new Error("Lỗi khi lấy tất cả kết quả tìm kiếm tỉnh");
     }
 }
 

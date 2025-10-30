@@ -78,6 +78,45 @@ const searchXa = async (query, page, limit) => {
   }
 };
 
+// Lấy tất cả xã (không phân trang)
+const getAllXa = async () => {
+  try {
+    const result = await db.query(`SELECT t.ten_tinh, t.quoc_gia, h.ten_huyen, x.* FROM "xa" x 
+      JOIN huyen h ON x.ma_huyen = h.ma_huyen
+      JOIN tinh t ON h.ma_tinh = t.ma_tinh`);
+    return result.rows;
+  } catch (error) {
+    console.error("lỗi lấy tất cả xã:", error);
+    throw new Error("Database error");
+  }
+};
+
+// Tìm kiếm trả về tất cả kết quả khớp (không phân trang)
+const searchXaAll = async (query) => {
+  try {
+    const keyword = `%${query}%`;
+    const result = await db.query(`
+      SELECT t.ten_tinh, t.quoc_gia, h.ten_huyen, x.* FROM "xa" x
+      JOIN huyen h ON x.ma_huyen = h.ma_huyen
+      JOIN tinh t ON h.ma_tinh = t.ma_tinh
+      WHERE 
+      CAST (x.ma_xa AS TEXT) ILIKE $1 OR
+      x.ten_xa ILIKE $1 OR
+      x.cap_hanh_chinh ILIKE $1 OR
+      x.mo_ta ILIKE $1 OR
+      CAST (x.ma_huyen AS TEXT) ILIKE $1 OR
+      h.ten_huyen ILIKE $1 OR
+      t.ten_tinh ILIKE $1 OR
+      t.quoc_gia ILIKE $1
+    `, [keyword]);
+
+    return result.rows;
+  } catch (error) {
+    console.error("lỗi tìm kiếm xã (all):", error);
+    throw new Error("Database error");
+  }
+};
+
 const getXaById = async (id) => {
   try {
     const result = await db.query(`SELECT t.ten_tinh, t.quoc_gia, h.ten_huyen, x.* FROM "xa" x 
@@ -158,6 +197,8 @@ module.exports = {
   // getAllImgXa,
   getPaginationXa,
   searchXa,    
+  getAllXa,
+  searchXaAll,
   getXaById,
   updateXa,
   deleteXa

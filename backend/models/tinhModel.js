@@ -82,6 +82,29 @@ const searchTinh = async (query, page, limit) => {
   }
 };
 
+// Trả về tất cả kết quả tìm kiếm (không phân trang)
+const searchTinhAll = async (query) => {
+  try {
+    const keyword = `%${query}%`;
+    const dataResult = await db.query(`
+      SELECT * FROM "tinh"
+      WHERE
+        CAST(ma_tinh AS TEXT) ILIKE $1 OR
+        ten_tinh ILIKE $1 OR
+        quoc_gia ILIKE $1 OR
+        cap_hanh_chinh ILIKE $1 OR
+        CAST(dan_so AS TEXT) ILIKE $1 OR
+        CAST(dien_tich AS TEXT) ILIKE $1
+      ORDER BY ten_tinh
+    `, [keyword]);
+
+    return dataResult.rows;
+  } catch (error) {
+    console.error("Lỗi khi tìm kiếm tất cả:", error);
+    throw new Error("Database error");
+  }
+};
+
 const getTinhById = async (id) => {
   try {
     const result = await db.query(`
@@ -168,5 +191,6 @@ module.exports = {
   updateTinh,
   deleteTinh,
   getPaginationTinh,
-  searchTinh
+  searchTinh,
+  searchTinhAll
 }

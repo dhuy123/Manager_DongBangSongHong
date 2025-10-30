@@ -4,16 +4,32 @@
         <div class="main-layout">
             <Sidebar class="sidebar" />
             <main class="content">
-
-                <div class="header-actions">
-                    <h3>Danh sách các tỉnh:</h3>
-                    <div>
-                        <button class="btn btn-success" @click="exportToCSV">Xuất CSV</button>
+                <div class="header-actions d-flex justify-content-between align-items-center mb-3">
+                    <h3>Danh sách các tỉnh</h3>
+                    <div class="action-buttons">
+                        <button @click="goToUser" class="btn btn-secondary me-2">
+                            <i class="fas fa-map-marker-alt"></i> Map
+                        </button>
+                        <button class="btn btn-success me-2" @click="exportToCSV">Xuất CSV</button>
                         <button class="btn btn-danger" @click="exportToPDF">Xuất PDF</button>
+                    </div>
+                    <div class="search">
+                        <div class="input-group" style="position: relative;">
+                            <div class="form-outline" data-mdb-input-init>
+                                <input id="search-input" type="search" class="form-control" v-model="search"
+                                    @input="onSearch" placeholder="Tìm kiếm..." />
+                            </div>
+
+                            <!-- Nút tìm kiếm -->
+                            <button id="search-button" type="button" class="btn btn-primary" @click="onSearch">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+
                     </div>
                 </div>
 
-                <table class="province-table table table-striped table-bordered" id="provinceTable">
+                <table class="table table-striped table-bordered">
                     <thead>
                         <tr>
                             <th>STT</th>
@@ -38,33 +54,43 @@
                             <td>{{ huyen.cap_hanh_chinh }}</td>
                             <td>{{ huyen.dien_tich }}</td>
                             <td>{{ huyen.dan_so }}</td>
-                            <td>
-                                <button class="btn btn-info btn-sm" :data-id="huyen.id"><i
+                            <td class="d-flex justify-content-between">
+                                <button class="btn btn-info btn-sm me-1" @click="openViewModal(huyen)"><i
                                         class="fas fa-eye"></i></button>
-                            </td>
-                            <td>
-                                <button class="btn btn-primary btn-sm" @click="goToImagePage(huyen.id)"><i
+                                <button class="btn btn-primary btn-sm" @click="goToImagePage(huyen.ma_huyen)"><i
                                         class="fas fa-image"></i></button>
-                            </td>
-                            <td>
-                                <button class="btn btn-warning btn-sm"><i class="fas fa-edit"></i></button>
-                            </td>
-                            <td>
-                                <button class="btn btn-danger btn-sm"><i class="fas fa-trash"></i></button>
+                                <button class="btn btn-warning btn-sm me-1" @click="openEditModal(huyen)"><i
+                                        class="fas fa-edit"></i></button>
+                                <button class="btn btn-danger btn-sm" @click="deleteHuyen(huyen.id)"><i
+                                        class="fas fa-trash"></i></button>
                             </td>
                         </tr>
                     </tbody>
                 </table>
 
+                <!-- Pagination -->
+                <div v-if="totalPages > 1">
+                    <ul class="pagination justify-content-end">
+                        <li class="page-item" :class="{ disabled: currentPage === 1 }">
+                            <button class="page-link" @click="goToPage(currentPage - 1)">Trước</button>
+                        </li>
+                        <li class="page-item" v-for="page in totalPages" :key="page"
+                            :class="{ active: currentPage === page }">
+                            <button class="page-link" @click="goToPage(page)">{{ page }}</button>
+                        </li>
+                        <li class="page-item" :class="{ disabled: currentPage === totalPages }">
+                            <button class="page-link" @click="goToPage(currentPage + 1)">Sau</button>
+                        </li>
+                    </ul>
+                </div>
+
                 <!-- Modal for viewing province details -->
-                <div class="modal fade" id="viewProvinceModal" tabindex="-1" aria-labelledby="viewProvinceModalLabel"
-                    aria-hidden="true">
+                <div class="modal fade" id="viewProvinceModal" tabindex="-1" aria-hidden="true">
                     <div class="modal-dialog">
                         <div class="modal-content">
                             <div class="modal-header">
-                                <h5 class="modal-title" id="viewProvinceModalLabel">Chi tiết thông tin tỉnh</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                    aria-label="Close"></button>
+                                <h5 class="modal-title">Chi tiết thông tin huyện</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                             </div>
                             <div class="modal-body">
                                 <div class="mb-3">
@@ -103,14 +129,12 @@
                 </div>
 
                 <!-- Modal for editing province -->
-                <div class="modal fade" id="editProvinceModal" tabindex="-1" aria-labelledby="editProvinceModalLabel"
-                    aria-hidden="true">
+                <div class="modal fade" id="editProvinceModal" tabindex="-1" aria-hidden="true">
                     <div class="modal-dialog">
                         <div class="modal-content">
                             <div class="modal-header">
-                                <h5 class="modal-title" id="editProvinceModalLabel">Chỉnh sửa thông tin tỉnh</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                    aria-label="Close"></button>
+                                <h5 class="modal-title">Chỉnh sửa thông tin tỉnh</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                             </div>
                             <div class="modal-body">
                                 <form @submit.prevent="submitEditForm">
@@ -162,15 +186,14 @@
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import $ from 'jquery';
-import 'datatables.net';
-import 'datatables.net-bs5';
-import 'datatables.net-bs5/css/dataTables.bootstrap5.min.css';
 import Header from '../../../components/header/HeaderAdmin.vue';
 import Sidebar from '../../../components/sidebar/SidebarAdmin.vue';
-import { getAllHuyen, getHuyenById, updateHuyen, deleteHuyenAPI } from '../../../utils/api/api_huyen.js';
+import { getPaginatedHuyen, searchHuyen, getHuyenById, updateHuyen, deleteHuyenAPI, getAllHuyen, searchHuyenAll } from '../../../utils/api/api_huyen';
+// PDF generation
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import { Modal } from 'bootstrap';
 
 const huyenList = ref([]);
@@ -197,87 +220,46 @@ const viewForm = ref({
     dan_so: 0,
     mo_ta: ''
 });
-let editModal = null;
-let viewModal = null;
 
-const fetchHuyenData = async () => {
+const search = ref('');
+const currentPage = ref(1);
+const totalPages = ref(1);
+const limit = ref(10);
+
+const fetchHuyenData = async (page = 1) => {
     try {
-        const response = await getAllHuyen();
-        huyenList.value = response.data || response;
+        const response = await getPaginatedHuyen(page, limit.value);
+        huyenList.value = response.data;
+        currentPage.value = response.currentPage;
+        totalPages.value = response.totalPages;
+        console.log("Tổng số bản ghi:", response.totalRecords);
+        console.log("Page:", response.currentPage, "Total pages:", totalPages.value);
         console.log('Huyen data fetched successfully:', huyenList.value);
-
-        await nextTick();
-
-        if ($.fn.DataTable.isDataTable('#provinceTable')) {
-            $('#provinceTable').DataTable().clear().destroy();
-        }
-
-        $('#provinceTable').DataTable({
-            data: huyenList.value,
-            columns: [
-                { data: null, render: (data, type, row, meta) => meta.row + 1 },
-                { data: 'ma_huyen' },
-                { data: 'ten_huyen' },
-                { data: 'ma_tinh' },
-                {
-                    data: null,
-                    render: (data, type, row) => `${row.ten_tinh} (${row.quoc_gia})`
-                },
-                { data: 'cap_hanh_chinh' },
-                { data: 'dien_tich' },
-                { data: 'dan_so' },
-                {
-                    data: null,
-                    render: (data) =>
-                        `<button class="btn btn-info btn-sm" data-id="${data.id}" title="Xem chi tiết" ><i class="fas fa-eye"></i></button>`
-                },
-                {
-                    data: null,
-                    render: (data) =>
-                        `<button class="btn btn-primary btn-sm" data-id="${data.ma_huyen}" title="Ảnh"><i class="fas fa-image"></i></button>`
-                },
-                {
-                    data: null,
-                    render: (data) =>
-                        `<button class="btn btn-warning btn-sm" data-id="${data.id}" title="Chỉnh sửa "><i class="fas fa-edit"></i></button>`
-                },
-                {
-                    data: null,
-                    render: (data) =>
-                        `<button class="btn btn-danger btn-sm" data-id="${data.id}" title="Xóa"><i class="fas fa-trash"></i></button>`
-                }
-            ],
-            pageLength: 10,
-            responsive: true,
-            destroy: true,
-            columnDefs: [
-                { orderable: false, targets: [0, 7, 8, 10] }
-            ]
-        });
-
-        $('#provinceTable').on('click', '.btn-info', function () {
-            const id = $(this).data('id');
-            const huyen = huyenList.value.find((t) => t.id === id);
-            openViewModal(huyen);
-        });
-
-        $('#provinceTable').on('click', '.btn-primary', function () {
-            const ma_huyen = $(this).data('id');
-            goToImagePage(ma_huyen); // Handle image button click
-        });
-
-        $('#provinceTable').on('click', '.btn-warning', function () {
-            const id = $(this).data('id');
-            const huyen = huyenList.value.find((t) => t.id === id);
-            openEditModal(huyen);
-        });
-
-        $('#provinceTable').on('click', '.btn-danger', function () {
-            const id = $(this).data('id');
-            deleteHuyen(id);
-        });
     } catch (error) {
         console.error('Error fetching Huyen data:', error);
+    }
+};
+
+const goToPage = (page) => {
+    if (page < 1 || page > totalPages.value) return;
+    fetchHuyenData(page);
+};
+
+const onSearch = async () => {
+    if (search.value.trim() === '') {
+        await fetchHuyenData(1);
+        return;
+    } else {
+        try {
+            const response = await searchHuyen(search.value, 1, limit.value);
+            huyenList.value = response.data || response;
+            currentPage.value = response.currentPage;
+            totalPages.value = response.totalPages;
+            console.log("từ khóa tìm kiếm:", search.value);
+            console.log("Kết quả tìm kiếm:", response);
+        } catch (error) {
+            console.error('Error searching Huyen:', error);
+        }
     }
 };
 
@@ -286,66 +268,34 @@ const openViewModal = async (huyen) => {
         const response = await getHuyenById(huyen.id);
         const huyenData = response.data || response;
         viewForm.value = { ...huyenData };
-        console.log('Huyen data for view:', viewForm.value);
-        if (!viewModal) {
-            viewModal = new Modal(document.getElementById('viewProvinceModal'), {
-                backdrop: 'static',
-                keyboard: false
-            });
-        }
-        viewModal.show();
+        const modalEl = document.getElementById('viewProvinceModal');
+        const modal = new Modal(modalEl, {
+            backdrop: 'static',
+            keyboard: false
+        });
+        modal.show();
     } catch (error) {
         console.error('Error fetching Huyen data for view:', error);
     }
 };
 
 const openEditModal = async (huyen) => {
-      if (!huyen || !huyen.id) {
-        console.error('Huyện không hợp lệ:', huyen);
-        return;
-    }
-    try {
-        const response = await getHuyenById(huyen.id);
-        const huyenData = response.data || response;
-        editForm.value = { ...huyenData };
-        console.log('Huyen data for edit:', editForm.value);
-        if (!editModal) {
-            editModal = new Modal(document.getElementById('editProvinceModal'), {
-                backdrop: 'static',
-                keyboard: false
-            });
-        }
-        editModal.show();
-    } catch (error) {
-        console.error('Error fetching Huyen data for edit:', error);
-    }
+    editForm.value = { ...huyen };
+    const modalEl = document.getElementById('editProvinceModal');
+    const editModal = new Modal(modalEl, {
+        backdrop: 'static',
+        keyboard: false
+    });
+    editModal.show();
 };
 
 const submitEditForm = async () => {
     try {
         await updateHuyen(editForm.value.id, editForm.value);
         console.log('Huyen updated successfully:', editForm.value);
-
-        // Cập nhật dữ liệu trong huyenList
-        const index = huyenList.value.findIndex(h => h.id === editForm.value.id);
-        if (index !== -1) {
-            huyenList.value[index] = {
-                ...huyenList.value[index],  // giữ lại ten_tinh, ten_quocgia cũ
-                ...editForm.value,          // ghi đè các trường đã sửa
-            };
-
-        }
-
-        // Làm mới bảng DataTable mà không phá hủy
-        const table = $('#provinceTable').DataTable();
-        table.clear(); // Xóa dữ liệu cũ
-        table.rows.add(huyenList.value); // Thêm dữ liệu mới
-        table.draw(); // Vẽ lại bảng
-
-        // Đóng modal
-        if (editModal) {
-            editModal.hide();
-        }
+        const modalEl = document.getElementById('editProvinceModal');
+        const editModal = Modal.getInstance(modalEl);
+        editModal.hide();
     } catch (error) {
         console.error('Error updating Huyen:', error);
     }
@@ -363,109 +313,107 @@ const deleteHuyen = async (id) => {
     }
 };
 
-const exportToCSV = () => {
-    const headers = ['STT', 'Mã huyện', 'Tên huyện', 'Mã Tỉnh', 'Tỉnh/Thành Phố ', 'Cấp hành chính', 'Diện tích (km²)', 'Dân số (Người)', 'Mô tả'];
-    const table = $('#provinceTable').DataTable();
-    const rows = table.rows({ search: 'applied', order: 'applied' }).data().toArray().map((huyen, idx) => [
-        idx + 1,
-        huyen.ma_huyen,
-        huyen.ten_huyen,
-        huyen.ma_tinh,
-        huyen.ten_tinh + '-' + huyen.quoc_gia,
-        huyen.cap_hanh_chinh,
-        huyen.dien_tich,
-        huyen.dan_so,
-        huyen.mo_ta || ''
-    ]);
+const exportToCSV = async () => {
+    try {
+        let res;
+        if (search.value && search.value.trim() !== '') {
+            res = await searchHuyenAll(search.value);
+        } else {
+            res = await getAllHuyen();
+        }
+        const data = Array.isArray(res) ? res : res.data || [];
+        if (!data || data.length === 0) {
+            alert('Không có dữ liệu để xuất');
+            return;
+        }
 
-    // Thêm BOM ở đầu file để hỗ trợ UTF-8 cho tiếng Việt
-    const csvContent = '\uFEFF' + [headers, ...rows]
-        .map(row => row.map(item => `"${item}"`).join(','))
-        .join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', 'huyen_list.csv');
-    document.body.appendChild(link); // để đảm bảo click hoạt động ổn
-    link.click();
-    document.body.removeChild(link); // xóa khỏi DOM
-    URL.revokeObjectURL(url); // giải phóng bộ nhớ
-};
-
-const exportToPDF = () => {
-    const table = $('#provinceTable').DataTable();
-
-    // 1. Lấy thông tin sort hiện tại
-    const order = table.order(); // [ [columnIndex, 'asc' or 'desc'] ]
-    const sortColIndex = order?.[0]?.[0]; // chỉ lấy cột đầu tiên
-    const colTitle = table.column(sortColIndex).header().textContent.trim();
-
-    // 2. Đặt tiêu đề phù hợp
-    let pdfTitle = 'Danh sách các huyện vùng đồng bằng sông Hồng';
-    if (colTitle === 'Dân số (Người)') pdfTitle = 'Thống kê dân số các huyện vùng đồng bằng sông Hồng ';
-    else if (colTitle === 'Diện tích (km²)') pdfTitle = 'Thống kê diện tích các huyện vùng đồng bằng sông Hồng';
-
-    // 3. Đặt tiêu đề cột và dữ liệu (bỏ "Mô tả")
-    const headers = [
-        'STT', 'Mã huyện', 'Tên huyện', 'Mã Tỉnh', 'Tỉnh/Thành Phố ', 'Cấp hành chính', 'Diện tích (km²)', 'Dân số (Người)'
-    ];
-
-    const rows = table
-        .rows({ search: 'applied', order: 'applied' })
-        .data()
-        .toArray()
-        .map((huyen, idx) => [
-            { text: idx + 1, alignment: 'center' },
-            huyen.ma_huyen ?? '',
-            huyen.ten_huyen ?? '',
-            huyen.ma_tinh ?? '',
-            [huyen.ten_tinh, huyen.quoc_gia].filter(Boolean).join(' - '),
-            huyen.cap_hanh_chinh ?? '',
-            huyen.dien_tich ?? '',
-            huyen.dan_so ?? ''
+        const headers = ['STT', 'Mã huyện', 'Tên huyện', 'Mã tỉnh', 'Tỉnh', 'Cấp hành chính', 'Diện tích (km²)', 'Dân số (Người)'];
+        const rows = data.map((h, idx) => [
+            idx + 1,
+            h.ma_huyen ?? '',
+            h.ten_huyen ?? '',
+            h.ma_tinh ?? '',
+            [h.ten_tinh, h.quoc_gia].filter(Boolean).join(' - '),
+            h.cap_hanh_chinh ?? '',
+            h.dien_tich ?? '',
+            h.dan_so ?? ''
         ]);
 
-    if (rows.includes(undefined)) {
-        console.error('❌ Dòng có undefined:', rows);
-        return rows;
+        const csvContent = '\uFEFF' + [headers, ...rows]
+            .map(row => row.map(item => `"${String(item).replace(/"/g, '""')}"`).join(','))
+            .join('\n');
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        const now = new Date();
+        link.setAttribute('download', `huyen_all_${now.toISOString().slice(0,10)}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    } catch (err) {
+        console.error('Lỗi khi xuất CSV huyện:', err);
+        alert('Lỗi khi xuất CSV. Xem console để biết thêm chi tiết.');
     }
+};
 
-    // 4. Tạo nội dung PDF
-    const docDefinition = {
-        pageSize: 'A4',
-        pageOrientation: 'portrait', // ✅ A4 Dọc
-        content: [
-            { text: pdfTitle.toUpperCase(), style: 'header', alignment: 'center', margin: [0, 0, 0, 10] },
-            {
-                table: {
-                    headerRows: 1,
-                    widths: [20, 80, 100, 80, 120, 80, 80, 80],
+const exportToPDF = async () => {
+    try {
+        let res;
+        if (search.value && search.value.trim() !== '') {
+            res = await searchHuyenAll(search.value);
+        } else {
+            res = await getAllHuyen();
+        }
+        const data = Array.isArray(res) ? res : res.data || [];
+        if (!data || data.length === 0) {
+            alert('Không có dữ liệu để xuất');
+            return;
+        }
 
-                    body: [
-                        headers.map(h => ({ text: h, bold: true, fillColor: '#eeeeee' })),
-                        ...rows
-                    ]
-                },
-                layout: 'lightHorizontalLines'
-            }
-        ],
-        styles: {
-            header: {
-                fontSize: 14,
-                bold: true
-            }
-        },
-        defaultStyle: {
-            font: 'Roboto',
-            fontSize: 10
-        },
-        pageOrientation: 'landscape'
-    };
+        const doc = new jsPDF('landscape');
+        const title = 'Danh sách huyện';
+        doc.setFontSize(14);
+        doc.text(title, 14, 20);
 
-    // 5. Tạo và tải PDF
-    pdfMake.createPdf(docDefinition).download(`${pdfTitle.replace(/\s+/g, '_').toLowerCase()}.pdf`);
+        const columns = [
+            { header: 'STT', dataKey: 'stt' },
+            { header: 'Mã huyện', dataKey: 'ma_huyen' },
+            { header: 'Tên huyện', dataKey: 'ten_huyen' },
+            { header: 'Mã tỉnh', dataKey: 'ma_tinh' },
+            { header: 'Tỉnh', dataKey: 'tinh' },
+            { header: 'Cấp hành chính', dataKey: 'cap_hanh_chinh' },
+            { header: 'Diện tích (km²)', dataKey: 'dien_tich' },
+            { header: 'Dân số (Người)', dataKey: 'dan_so' }
+        ];
+
+        const rows = data.map((h, idx) => ({
+            stt: idx + 1,
+            ma_huyen: h.ma_huyen ?? '',
+            ten_huyen: h.ten_huyen ?? '',
+            ma_tinh: h.ma_tinh ?? '',
+            tinh: [h.ten_tinh, h.quoc_gia].filter(Boolean).join(' - '),
+            cap_hanh_chinh: h.cap_hanh_chinh ?? '',
+            dien_tich: h.dien_tich ?? '',
+            dan_so: h.dan_so ?? ''
+        }));
+
+        autoTable(doc, {
+            head: [columns.map(c => c.header)],
+            body: rows.map(r => columns.map(c => r[c.dataKey])),
+            startY: 26,
+            styles: { fontSize: 9 },
+            headStyles: { fillColor: [22, 160, 133] }
+        });
+
+        const now = new Date();
+        doc.save(`huyen_all_${now.toISOString().slice(0,10)}.pdf`);
+    } catch (err) {
+        console.error('Lỗi khi xuất PDF huyện:', err);
+        alert('Lỗi khi xuất PDF. Xem console để biết thêm chi tiết.');
+    }
 };
 
 const goToImagePage = (ma_huyen) => {
@@ -477,14 +425,6 @@ const goToImagePage = (ma_huyen) => {
 
 onMounted(() => {
     fetchHuyenData();
-    editModal = new Modal(document.getElementById('editProvinceModal'), {
-        backdrop: 'static',
-        keyboard: false
-    });
-    viewModal = new Modal(document.getElementById('viewProvinceModal'), {
-        backdrop: 'static',
-        keyboard: false
-    });
 });
 </script>
 

@@ -38,6 +38,22 @@ const searchTinh = async (req, res) => {
   }
 };
 
+// Trả về tất cả kết quả tìm kiếm (không phân trang)
+const searchTinhAll = async (req, res) => {
+  try {
+    const query = req.query.query;
+    console.log("🔍 (all) Từ khóa tìm kiếm:", query);
+    if (!query) {
+      return res.status(400).json({ message: "Thiếu từ khóa tìm kiếm" });
+    }
+    const result = await tinhModel.searchTinhAll(query);
+    res.status(200).json(result);
+  } catch (error) {
+    console.error("Error searching provinces (all):", error);
+    res.status(500).json({ message: "Lỗi máy chủ", error: error.message });
+  }
+};
+
 const getTinhById = async (req, res) => {
   const { id } = req.params;
   try {
@@ -91,4 +107,5 @@ module.exports = {
   deleteTinh,
   getPaginatedTinh,
   searchTinh,
+  searchTinhAll,
 }

@@ -5,15 +5,36 @@
             <Sidebar class="sidebar" />
             <main class="content">
 
-                <div class="header-actions">
-                    <h3>Danh sách người dùng :</h3>
+                <div class="header-actions d-flex justify-content-between align-items-center mb-3">
+                    <h3>Danh sách các tỉnh</h3>
+                    <div class="action-buttons">
+                        <button @click="goToUser" class="btn btn-secondary me-2">
+                            <i class="fas fa-map-marker-alt"></i> Map
+                        </button>
+                        <button class="btn btn-success me-2" @click="exportToCSV">Xuất CSV</button>
+                        <button class="btn btn-danger" @click="exportToPDF">Xuất PDF</button>
+                    </div>
                     <div>
                         <button class="btn btn-success" @click="openCreateModel">Thêm mới </button>
+                    </div>
+                    <div class="search">
+                        <div class="input-group" style="position: relative;">
+                            <div class="form-outline" data-mdb-input-init>
+                                <input id="search-input" type="search" class="form-control" v-model="search"
+                                    @input="onSearch" placeholder="Tìm kiếm..." />
+                            </div>
+
+
+                            <!-- Nút tìm kiếm -->
+                            <button id="search-button" type="button" class="btn btn-primary" @click="onSearch">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
 
                     </div>
                 </div>
 
-                <table class="province-table table table-striped table-bordered" id="provinceTable">
+                <table class=" table table-striped table-bordered" >
                     <thead>
                         <tr>
                             <th>STT</th>
@@ -24,8 +45,8 @@
                             <th>Vai trò </th>
                             <th>Điện thoại</th>
                             <!-- <th>Mô tả</th> -->
-                            <th colspan="3">Thao tác</th>
-                        </tr>
+                            <th colspan=" 3">Thao tác</th>
+                    </tr>
                     </thead>
                     <tbody>
                         <tr v-for="(account, index) in accountList" :key="account.id">
@@ -37,21 +58,23 @@
                             <td>{{ account.role }}</td>
                             <td>{{ account.sdt }}</td>
                             <td>
-                                <button class="btn btn-info btn-sm" :data-id="account.id"><i
+                                <button class="btn btn-info btn-sm" @click="openViewModal(account)"><i
                                         class="fas fa-eye"></i></button>
                             </td>
                             <td>
-                                <button class="btn btn-warning btn-sm"><i class="fas fa-edit"></i></button>
+                                <button class="btn btn-warning btn-sm" @click="openEditModal(account)"><i
+                                        class="fas fa-edit"></i></button>
                             </td>
-                            <!-- <td>
-                <button class="btn btn-danger btn-sm"><i class="fas fa-trash"></i></button>
-              </td> -->
+                            <td>
+                                <button class="btn btn-danger btn-sm" @click="deleteAccount(account.id)"><i
+                                        class="fas fa-trash"></i></button>
+                            </td>
                         </tr>
                     </tbody>
                 </table>
 
                 <!-- Modal for viewing province details -->
-                <div class="modal fade" id="viewProvinceModal" tabindex="-1" aria-labelledby="viewProvinceModalLabel"
+                <div class="modal fade" id="viewProvinceModal" tabindex="-1"
                     aria-hidden="true">
                     <div class="modal-dialog">
                         <div class="modal-content">
@@ -96,7 +119,7 @@
                 </div>
 
                 <!-- Modal for editing province -->
-                <div class="modal fade" id="editProvinceModal" tabindex="-1" aria-labelledby="editProvinceModalLabel"
+                <div class="modal fade" id="editProvinceModal" tabindex="-1" 
                     aria-hidden="true">
                     <div class="modal-dialog">
                         <div class="modal-content">
@@ -156,15 +179,13 @@
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import $ from 'jquery';
-import 'datatables.net';
-import 'datatables.net-bs5';
-import 'datatables.net-bs5/css/dataTables.bootstrap5.min.css';
 import Header from '../../../components/header/HeaderAdmin.vue';
 import Sidebar from '../../../components/sidebar/SidebarAdmin.vue';
-import { getAllAccount, getAccountById, createAccount, updateAccount, deleteAccountAPI } from '../../../utils/api/api_account';
+import { getPaginatedAccount, searchAccount, getAccountById, createAccount, updateAccount, deleteAccountAPI, getAllAccount, searchAccountAll } from '../../../utils/api/api_account';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import { Modal } from 'bootstrap';
 
 const accountList = ref([]);
@@ -187,92 +208,74 @@ const viewForm = ref({
     role: '',
     sdt: '',
 });
-let editModal = null;
-let viewModal = null;
-const isCreateMode = ref(false);
+const isCreateMode = ref(null);
+const search = ref('');
+const currentPage = ref(1);
+const totalPages = ref(1);
+const limit = ref(10);
+
+const viewModal = ref(null);
+const editModal = ref(null);
 
 
 const fetchAccountData = async () => {
     try {
-        const response = await getAllAccount();
+        const response = await getPaginatedAccount(currentPage.value, limit.value);
         accountList.value = response.data || response;
         console.log('Tinh data fetched successfully:', accountList.value);
 
-        await nextTick();
-
-        if ($.fn.DataTable.isDataTable('#provinceTable')) {
-            $('#provinceTable').DataTable().clear().destroy();
-        }
-
-        $('#provinceTable').DataTable({
-            data: accountList.value,
-            columns: [
-                { data: null, render: (data, type, row, meta) => meta.row + 1 },
-                { data: 'ho_ten' },
-                { data: 'gioi_tinh' },
-                { data: 'tai_khoan' },
-                { data: 'mat_khau' },
-                { data: 'role' },
-                { data: 'sdt' },
-
-                {
-                    data: null,
-                    render: (data) =>
-                        `<button class="btn btn-info btn-sm" data-id="${data.id}" title="Xem chi tiết" ><i class="fas fa-eye"></i></button>`
-                },
-                {
-                    data: null,
-                    render: (data) =>
-                        `<button class="btn btn-primary btn-sm" data-id="${data.id}" title="Chỉnh sửa "><i class="fas fa-edit"></i></button>`
-                },
-                {
-                    data: null,
-                    render: (data) =>
-                        `<button class="btn btn-danger btn-sm" data-id="${data.id}" title="Xóa"><i class="fas fa-trash"></i></button>`
-                }
-            ],
-            pageLength: 10,
-            responsive: true,
-            destroy: true,
-            columnDefs: [
-                { orderable: false, targets: [0, 7, 8, 8] }
-            ]
-        });
-
-        $('#provinceTable').on('click', '.btn-info', function () {
-            const id = $(this).data('id');
-            const account = accountList.value.find((t) => t.id === id);
-            openViewModal(account);
-        });
-
-        $('#provinceTable').on('click', '.btn-primary', function () {
-            const id = $(this).data('id');
-            const account = accountList.value.find((t) => t.id === id);
-            openEditModal(account);
-        });
-
-        $('#provinceTable').on('click', '.btn-danger', function () {
-            const id = $(this).data('id');
-            deleteAccount(id);
-        });
     } catch (error) {
-        console.error('Error fetching Tinh data:', error);
+        console.error('Error fetching Account data:', error);
+    }
+};
+
+const gotoPage = async (page) => {
+    if (page < 1 || page > totalPages.value) return;
+    currentPage.value = page;
+    await fetchAccountData();
+};
+
+const onSearch = async () => {
+    if (search.value.trim() === '') {
+        await fetchAccountData();
+    } else {
+        try {
+            const response = await searchAccount(search.value.trim());
+            accountList.value = response.data || response;
+            console.log('Search results:', accountList.value);
+        } catch (error) {
+            console.error('Error searching Account:', error);
+        }
     }
 };
 
 const openCreateModel = () => {
-    isCreateMode.value = true;
-    editForm.value = {
-        id: null,
-        ho_ten: '',
-        gioi_tinh: '',
-        tai_khoan: '',
-        mat_khau: '',
-        role: '',
-        sdt: null
-    };
-    editModal.show();
+  isCreateMode.value = true;
+  editForm.value = {
+    id: null,
+    ho_ten: '',
+    gioi_tinh: '',
+    tai_khoan: '',
+    mat_khau: '',
+    role: '',
+    sdt: null
+  };
+
+  if (!editModal.value) {
+    const el = document.getElementById('editProvinceModal');
+    if (!el) {
+      console.error('Không tìm thấy phần tử modal!');
+      return;
+    }
+    editModal.value = new Modal(el, {
+      backdrop: 'static',
+      keyboard: false
+    });
+  }
+
+  editModal.value.show();
 };
+
 
 
 const openViewModal = async (account) => {
@@ -280,13 +283,13 @@ const openViewModal = async (account) => {
         const response = await getAccountById(account.id);
         const accountData = response.data || response;
         viewForm.value = { ...accountData };
-        if (!viewModal) {
-            viewModal = new Modal(document.getElementById('viewProvinceModal'), {
+        if (!viewModal.value) {
+            viewModal.value = new Modal(document.getElementById('viewProvinceModal'), {
                 backdrop: 'static',
                 keyboard: false
             });
         }
-        viewModal.show();
+        viewModal.value.show();
     } catch (error) {
         console.error('Error fetching Account data for view:', error);
     }
@@ -298,13 +301,13 @@ const openEditModal = async (account) => {
         const response = await getAccountById(account.id);
         const accountData = response.data || response;
         editForm.value = { ...accountData };
-        // if (!editModal) {
-        //     editModal = new Modal(document.getElementById('editProvinceModal'), {
-        //         backdrop: 'static',
-        //         keyboard: false
-        //     });
-        // }
-        editModal.show();
+        if (!editModal.value) {
+            editModal.value = new Modal(document.getElementById('editProvinceModal'), {
+                backdrop: 'static',
+                keyboard: false
+            });
+        }
+        editModal.value.show();
     } catch (error) {
         console.error('Error fetching Tinh data for edit:', error);
     }
@@ -317,7 +320,7 @@ const submitEditForm = async () => {
         } else {
             await updateAccount(editForm.value.id, editForm.value);
         }
-        editModal.hide();
+        editModal.value.hide();
         await fetchAccountData();
     } catch (error) {
         console.error('Error saving Account:', error);
@@ -337,119 +340,106 @@ const deleteAccount = async (id) => {
 };
 
 // const exportToCSV = () => {
-//     const headers = ['STT', 'Tên tỉnh', 'Mã tỉnh', 'Quốc gia', 'Cấp hành chính', 'Diện tích (km²)', 'Dân số (Người)', 'Mô tả'];
-//     const table = $('#provinceTable').DataTable();
-//     const rows = table.rows({ search: 'applied', order: 'applied' }).data().toArray().map((tinh, idx) => [
-//         idx + 1,
-//         tinh.ten_tinh,
-//         tinh.ma_tinh,
-//         tinh.quoc_gia,
-//         tinh.cap_hanh_chinh,
-//         tinh.dien_tich,
-//         tinh.dan_so,
-//         tinh.mo_ta || ''
-//     ]);
+const exportToCSV = async () => {
+    try {
+        console.log('Bắt đầu xuất CSV account');
+        let res;
+        if (search.value && search.value.trim() !== '') {
+            res = await searchAccountAll(search.value.trim());
+        } else {
+            res = await getAllAccount();
+        }
+        const data = Array.isArray(res) ? res : res.data || [];
+        if (!data || data.length === 0) {
+            alert('Không có dữ liệu để xuất');
+            return;
+        }
 
-//     // Thêm BOM ở đầu file để hỗ trợ UTF-8 cho tiếng Việt
-//     const csvContent = '\uFEFF' + [headers, ...rows]
-//         .map(row => row.map(item => `"${item}"`).join(','))
-//         .join('\n');
-//     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-//     const url = URL.createObjectURL(blob);
+        const headers = ['STT', 'Họ và tên', 'Giới tính', 'Tài khoản', 'Vai trò', 'Điện thoại'];
+        const rows = data.map((a, idx) => [
+            idx + 1,
+            a.ho_ten ?? '',
+            a.gioi_tinh ?? '',
+            a.tai_khoan ?? '',
+            a.role ?? '',
+            a.sdt ?? ''
+        ]);
 
-//     const link = document.createElement('a');
-//     link.href = url;
-//     link.setAttribute('download', 'tinh_list.csv');
-//     document.body.appendChild(link); // để đảm bảo click hoạt động ổn
-//     link.click();
-//     document.body.removeChild(link); // xóa khỏi DOM
-//     URL.revokeObjectURL(url); // giải phóng bộ nhớ
-// };
+        const csvContent = '\uFEFF' + [headers, ...rows]
+            .map(row => row.map(item => `"${String(item).replace(/"/g, '""')}"`).join(','))
+            .join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        const now = new Date();
+        link.setAttribute('download', `account_all_${now.toISOString().slice(0,10)}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    } catch (err) {
+        console.error('Lỗi khi xuất CSV account:', err);
+        alert('Lỗi khi xuất CSV. Xem console để biết thêm chi tiết.');
+    }
+};
 
 // const exportToPDF = () => {
-//     const table = $('#provinceTable').DataTable();
+const exportToPDF = async () => {
+    try {
+        let res;
+        if (search.value && search.value.trim() !== '') {
+            res = await searchAccountAll(search.value.trim());
+        } else {
+            res = await getAllAccount();
+        }
+        const data = Array.isArray(res) ? res : res.data || [];
+        if (!data || data.length === 0) {
+            alert('Không có dữ liệu để xuất');
+            return;
+        }
 
-//     // 1. Lấy thông tin sort hiện tại
-//     const order = table.order(); // [ [columnIndex, 'asc' or 'desc'] ]
-//     const sortColIndex = order?.[0]?.[0]; // chỉ lấy cột đầu tiên
-//     const colTitle = table.column(sortColIndex).header().textContent.trim();
+        const doc = new jsPDF('landscape');
+        const title = 'Danh sách tài khoản';
+        doc.setFontSize(14);
+        doc.text(title, 14, 20);
 
-//     // 2. Đặt tiêu đề phù hợp
-//     let pdfTitle = 'Danh sách các tỉnh vùng đồng bằng sông Hồng';
-//     if (colTitle === 'Dân số (Người)') pdfTitle = 'Thống kê dân số vùng đồng bằng sông Hồng ';
-//     else if (colTitle === 'Diện tích (km²)') pdfTitle = 'Thống kê diện tích vùng đồng bằng sông Hồng';
+        const columns = [
+            { header: 'STT', dataKey: 'stt' },
+            { header: 'Họ và tên', dataKey: 'ho_ten' },
+            { header: 'Giới tính', dataKey: 'gioi_tinh' },
+            { header: 'Tài khoản', dataKey: 'tai_khoan' },
+            { header: 'Vai trò', dataKey: 'role' },
+            { header: 'Điện thoại', dataKey: 'sdt' }
+        ];
 
-//     // 3. Đặt tiêu đề cột và dữ liệu (bỏ "Mô tả")
-//     const headers = [
-//         'STT',
-//         'Tên tỉnh',
-//         'Mã tỉnh',
-//         'Quốc gia',
-//         'Cấp hành chính',
-//         'Diện tích (km²)',
-//         'Dân số (Người)'
-//     ];
+        const rows = data.map((a, idx) => ({
+            stt: idx + 1,
+            ho_ten: a.ho_ten ?? '',
+            gioi_tinh: a.gioi_tinh ?? '',
+            tai_khoan: a.tai_khoan ?? '',
+            role: a.role ?? '',
+            sdt: a.sdt ?? ''
+        }));
 
-//     const rows = table
-//         .rows({ search: 'applied', order: 'applied' })
-//         .data()
-//         .toArray()
-//         .map((tinh, idx) => [
-//             { text: idx + 1, alignment: 'center' },
-//             tinh.ten_tinh ?? '',
-//             tinh.ma_tinh ?? '',
-//             tinh.quoc_gia ?? '',
-//             tinh.cap_hanh_chinh ?? '',
-//             tinh.dien_tich ?? '',
-//             tinh.dan_so ?? ''
-//         ]);
+        autoTable(doc, {
+            head: [columns.map(c => c.header)],
+            body: rows.map(r => columns.map(c => r[c.dataKey])),
+            startY: 26,
+            styles: { fontSize: 9 },
+            headStyles: { fillColor: [22, 160, 133] }
+        });
 
-//     // 4. Tạo nội dung PDF
-//     const docDefinition = {
-//         pageSize: 'A4',
-//         pageOrientation: 'portrait', // ✅ A4 Dọc
-//         content: [
-//             { text: pdfTitle.toUpperCase(), style: 'header', alignment: 'center', margin: [0, 0, 0, 10] },
-//             {
-//                 table: {
-//                     headerRows: 1,
-//                     widths: [20, 100, 80, 80, 80, 80, 80],
-//                     body: [
-//                         headers.map(h => ({ text: h, bold: true, fillColor: '#eeeeee' })),
-//                         ...rows
-//                     ]
-//                 },
-//                 layout: 'lightHorizontalLines'
-//             }
-//         ],
-//         styles: {
-//             header: {
-//                 fontSize: 14,
-//                 bold: true
-//             }
-//         },
-//         defaultStyle: {
-//             font: 'Roboto',
-//             fontSize: 10
-//         },
-//         pageOrientation: 'landscape'
-//     };
-
-//     // 5. Tạo và tải PDF
-//     pdfMake.createPdf(docDefinition).download(`${pdfTitle.replace(/\s+/g, '_').toLowerCase()}.pdf`);
-// };
+        const now = new Date();
+        doc.save(`account_all_${now.toISOString().slice(0,10)}.pdf`);
+    } catch (err) {
+        console.error('Lỗi khi xuất PDF account:', err);
+        alert('Lỗi khi xuất PDF. Xem console để biết thêm chi tiết.');
+    }
+};
 
 
 onMounted(() => {
-    console.log('Account View mounted');
-    editModal = new Modal(document.getElementById('editProvinceModal'), {
-        backdrop: 'static',
-        keyboard: false
-    });
-    viewModal = new Modal(document.getElementById('viewProvinceModal'), {
-        backdrop: 'static',
-        keyboard: false
-    });
     fetchAccountData();
 });
 

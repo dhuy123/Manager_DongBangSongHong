@@ -28,6 +28,7 @@ const error = ref('')
 
 const handleLogin = async () => {
   try {
+    console.log('Đang đăng nhập với:', tai_khoan.value, mat_khau.value)
     const result = await login(tai_khoan.value, mat_khau.value)
     if (!result || !result.user.role) {
       throw new Error('Không nhận được thông tin người dùng')

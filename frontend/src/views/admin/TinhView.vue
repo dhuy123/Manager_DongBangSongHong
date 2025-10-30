@@ -54,8 +54,8 @@
               <td class="d-flex justify-content-between">
                 <button class="btn btn-info btn-sm me-1" @click="openViewModal(tinh)"><i
                     class="fas fa-eye"></i></button>
-        <button class="btn btn-primary btn-sm" @click="goToImgTinh(tinh.ma_tinh)"><i
-          class="fas fa-image"></i></button>
+                <button class="btn btn-primary btn-sm" @click="goToImgTinh(tinh.ma_tinh)"><i
+                    class="fas fa-image"></i></button>
                 <button class="btn btn-warning btn-sm me-1" @click="openEditModal(tinh)"><i
                     class="fas fa-edit"></i></button>
                 <button class="btn btn-danger btn-sm" @click="deleteTinh(tinh.id)"><i class="fas fa-trash"></i></button>
@@ -161,8 +161,12 @@ import {
   updateTinh,
   deleteTinhAPI,
   searchTinh,
-
+  getAllTinh,
+  searchTinhAll,
 } from "../../utils/api/api_tinh.js";
+// PDF generation
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import { Modal } from "bootstrap";
 
 const router = useRouter();
@@ -283,6 +287,119 @@ const goToUser = () => {
 const goToImgTinh = (ma_tinh) => {
   router.push(`/admin/imgTinh/${ma_tinh}`);
 };
+
+// Export CSV - will fetch ALL records from backend and create CSV file
+const exportToCSV = async () => {
+  try {
+    // Nếu đang có từ khóa tìm kiếm thì lấy tất cả kết quả tìm kiếm
+    let res;
+    if (search.value && search.value.trim() !== '') {
+      res = await searchTinhAll(search.value);
+    } else {
+      res = await getAllTinh();
+    }
+    const data = Array.isArray(res) ? res : res.data || [];
+
+    if (!data || data.length === 0) {
+      alert('Không có dữ liệu để xuất');
+      return;
+    }
+
+    const headers = [
+      'STT',
+      'Tên tỉnh',
+      'Mã tỉnh',
+      'Quốc gia',
+      'Cấp hành chính',
+      'Diện tích (km²)',
+      'Dân số (Người)'
+    ];
+
+    const rows = data.map((t, idx) => [
+      idx + 1,
+      t.ten_tinh ?? '',
+      t.ma_tinh ?? '',
+      t.quoc_gia ?? '',
+      t.cap_hanh_chinh ?? '',
+      t.dien_tich ?? '',
+      t.dan_so ?? ''
+    ]);
+
+    const csvContent = [headers.join(','), ...rows.map(r => r.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    const now = new Date();
+    link.setAttribute('download', `tinh_all_${now.toISOString().slice(0,10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  } catch (err) {
+    console.error('Lỗi khi xuất CSV:', err);
+    alert('Lỗi khi xuất CSV. Xem console để biết thêm chi tiết.');
+  }
+}
+
+// Export PDF - fetch all and create a PDF with autotable
+const exportToPDF = async () => {
+  try {
+    // Nếu đang có từ khóa tìm kiếm thì lấy tất cả kết quả tìm kiếm
+    let res;
+    if (search.value && search.value.trim() !== '') {
+      res = await searchTinhAll(search.value);
+    } else {
+      res = await getAllTinh();
+    }
+    const data = Array.isArray(res) ? res : res.data || [];
+
+    if (!data || data.length === 0) {
+      alert('Không có dữ liệu để xuất');
+      return;
+    }
+
+    const doc = new jsPDF('landscape');
+    const title = 'Danh sách tỉnh';
+    doc.setFontSize(14);
+    doc.text(title, 14, 20);
+
+    const columns = [
+      { header: 'STT', dataKey: 'stt' },
+      { header: 'Tên tỉnh', dataKey: 'ten_tinh' },
+      { header: 'Mã tỉnh', dataKey: 'ma_tinh' },
+      { header: 'Quốc gia', dataKey: 'quoc_gia' },
+      { header: 'Cấp hành chính', dataKey: 'cap_hanh_chinh' },
+      { header: 'Diện tích (km²)', dataKey: 'dien_tich' },
+      { header: 'Dân số (Người)', dataKey: 'dan_so' }
+    ];
+
+    const rows = data.map((t, idx) => ({
+      stt: idx + 1,
+      ten_tinh: t.ten_tinh ?? '',
+      ma_tinh: t.ma_tinh ?? '',
+      quoc_gia: t.quoc_gia ?? '',
+      cap_hanh_chinh: t.cap_hanh_chinh ?? '',
+      dien_tich: t.dien_tich ?? '',
+      dan_so: t.dan_so ?? ''
+    }));
+
+   autoTable(doc, {
+      head: [columns.map((c) => c.header)],
+      body: rows.map((r) => columns.map((c) => r[c.dataKey])),
+      startY: 26,
+      styles: { fontSize: 9 },
+      headStyles: { fillColor: [22, 160, 133] },
+    });
+
+    const now = new Date();
+    doc.save(`tinh_all_${now.toISOString().slice(0,10)}.pdf`);
+  } catch (err) {
+    console.error('Lỗi khi xuất PDF:', err);
+    alert('Lỗi khi xuất PDF. Xem console để biết thêm chi tiết.');
+  }
+}
 
 onMounted(() => {
   fetchTinh();

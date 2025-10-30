@@ -44,9 +44,9 @@ const handleLogin = () => {
   router.push({ name: 'login' })
 }
 
-// const handleRegister = () => {
-//   router.push({ name: 'register' }) // 👉 Chuyển tới trang đăng ký
-// }
+const handleRegister = () => {
+  router.push({ name: 'register' }) // 👉 Chuyển tới trang đăng ký
+}
 
 </script>
 

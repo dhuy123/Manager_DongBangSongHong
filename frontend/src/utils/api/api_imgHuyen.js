@@ -2,7 +2,7 @@ import { apiInstance } from "../api/api_config";
 
 export const getAllImgHuyen = async () => {
     try {
-        const response = await apiInstance.get('/imgHuyen');
+        const response = await apiInstance.get('/img_huyen');
         console.log("Danh sách hình ảnh huyện:", response.data);
         return response.data;
     } catch (error) {
@@ -12,9 +12,9 @@ export const getAllImgHuyen = async () => {
 };
 
 export const getImgHuyenByMaHuyen = async (ma_huyen) => {
+    console.log("Lấy hình ảnh huyện theo ma_huyen:", ma_huyen);
     try {
-        const response = await apiInstance.get(`/imgHuyen/${ma_huyen}`);
-        console.log("👉 Base URL API:", apiInstance.defaults.baseURL);
+        const response = await apiInstance.get(`/img_huyen/ma_huyen/${ma_huyen}`);
         console.log("Hình ảnh huyện tìm thấy:", response.data);
         return response.data;
     } catch (error) {
@@ -25,7 +25,7 @@ export const getImgHuyenByMaHuyen = async (ma_huyen) => {
 
 export const getImgHuyenById = async (id) => {
     try {
-        const response = await apiInstance.get(`/imgHuyen/id/${id}`);
+        const response = await apiInstance.get(`/img_huyen/id/${id}`);
         console.log("Hình ảnh huyện tìm thấy:", response.data);
         return response.data;
     } catch (error) {
@@ -36,7 +36,7 @@ export const getImgHuyenById = async (id) => {
 
 export const createImgHuyen = async (data) => {
     try {
-        const response = await apiInstance.post('/imgHuyen', data);
+        const response = await apiInstance.post('/img_huyen', data);
         console.log("Thêm hình ảnh huyện thành công:", response.data);
         return response.data;
     } catch (error) {
@@ -47,7 +47,7 @@ export const createImgHuyen = async (data) => {
 
 export const updateImgHuyen = async (id, data) => {
     try {
-        const response = await apiInstance.put(`/imgHuyen/${id}`, data);
+        const response = await apiInstance.put(`/img_huyen/${id}`, data);
         console.log("Cập nhật hình ảnh huyện thành công:", response.data);
         return response.data;
     } catch (error) {
@@ -58,7 +58,7 @@ export const updateImgHuyen = async (id, data) => {
 
 export const deleteImgHuyenAPI = async (id) => {
     try {
-        const response = await apiInstance.delete(`/imgHuyen/${id}`);
+        const response = await apiInstance.delete(`/img_huyen/${id}`);
         console.log("Xoá hình ảnh huyện thành công:", response.data);
         return response.data;
     } catch (error) {
@@ -67,20 +67,4 @@ export const deleteImgHuyenAPI = async (id) => {
     }
 };
 
-export const uploadImgHuyen = async (file) => {
-    const formData = new FormData();
-    formData.append('file', file);
 
-    try {
-        const response = await apiInstance.post('/imgHuyen/upload', formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data'
-            }
-        });
-        console.log("Tải lên hình ảnh huyện thành công:", response.data);
-        return response.data;
-    } catch (error) {
-        console.error("Error uploading district image:", error);
-        throw new Error("Lỗi khi tải lên hình ảnh huyện");
-    }
-};

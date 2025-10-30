@@ -5,15 +5,32 @@
             <Sidebar class="sidebar" />
             <main class="content">
 
-                <div class="header-actions">
-                    <h3>Danh sách các tỉnh:</h3>
-                    <div>
-                        <button class="btn btn-success" @click="exportToCSV">Xuất CSV</button>
+                <div class="header-actions d-flex justify-content-between align-items-center mb-3">
+                    <h3>Danh sách các xã</h3>
+                    <div class="action-buttons">
+                        <button @click="goToUser" class="btn btn-secondary me-2">
+                            <i class="fas fa-map-marker-alt"></i> Map
+                        </button>
+                        <button class="btn btn-success me-2" @click="exportToCSV">Xuất CSV</button>
                         <button class="btn btn-danger" @click="exportToPDF">Xuất PDF</button>
+                    </div>
+                    <div class="search">
+                        <div class="input-group" style="position: relative;">
+                            <div class="form-outline" data-mdb-input-init>
+                                <input id="search-input" type="search" class="form-control" v-model="search"
+                                    @input="onSearch" placeholder="Tìm kiếm..." />
+                            </div>
+
+                            <!-- Nút tìm kiếm -->
+                            <button id="search-button" type="button" class="btn btn-primary" @click="onSearch">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+
                     </div>
                 </div>
 
-                <table class="province-table table table-striped table-bordered" id="provinceTable">
+                <table class="table table-striped table-bordered">
                     <thead>
                         <tr>
                             <th>STT</th>
@@ -38,22 +55,54 @@
                             <td>{{ xa.cap_hanh_chinh }}</td>
                             <td>{{ xa.dien_tich }}</td>
                             <td>{{ xa.dan_so }}</td>
-                            <td>
-                                <button class="btn btn-info btn-sm" :data-id="xa.id"><i class="fas fa-eye"></i></button>
-                            </td>
-                            <td>
-                                <button class="btn btn-warning btn-sm"><i class="fas fa-edit"></i></button>
-                            </td>
-                            <td>
-                                <button class="btn btn-danger btn-sm"><i class="fas fa-trash"></i></button>
+                            <td class="d-flex justify-content-between">
+                                <button class="btn btn-info btn-sm me-1" @click="openViewModal(xa)"><i
+                                        class="fas fa-eye"></i></button>
+                                <button class="btn btn-warning btn-sm me-1" @click="openEditModal(xa)"><i
+                                        class="fas fa-edit"></i></button>
+                                <button class="btn btn-danger btn-sm" @click="deleteXa(xa.id)"><i
+                                        class="fas fa-trash"></i></button>
                             </td>
                         </tr>
                     </tbody>
                 </table>
 
+
+                <div v-if="totalPages > 1">
+                    <ul class="pagination justify-content-end">
+                        <!-- Nút Trước -->
+                        <li class="page-item" :class="{ disabled: currentPage === 1 }">
+                            <button class="page-link" @click="goToPage(currentPage - 1)">Trước</button>
+                        </li>
+
+                        <!-- Dấu ... đầu -->
+                        <li v-if="visiblePages[0] > 1" class="page-item disabled">
+                            <span class="page-link">...</span>
+                        </li>
+
+                        <!-- Danh sách trang -->
+                        <li v-for="page in visiblePages" :key="page" class="page-item"
+                            :class="{ active: currentPage === page }">
+                            <button class="page-link" @click="goToPage(page)">
+                                {{ page }}
+                            </button>
+                        </li>
+
+                        <!-- Dấu ... cuối -->
+                        <li v-if="visiblePages.at(-1) < totalPages" class="page-item disabled">
+                            <span class="page-link">...</span>
+                        </li>
+
+                        <!-- Nút Sau -->
+                        <li class="page-item" :class="{ disabled: currentPage === totalPages }">
+                            <button class="page-link" @click="goToPage(currentPage + 1)">Sau</button>
+                        </li>
+                    </ul>
+                </div>
+
+
                 <!-- Modal for viewing province details -->
-                <div class="modal fade" id="viewProvinceModal" tabindex="-1" aria-labelledby="viewProvinceModalLabel"
-                    aria-hidden="true">
+                <div class="modal fade" id="viewProvinceModal" tabindex="-1" aria-hidden="true">
                     <div class="modal-dialog">
                         <div class="modal-content">
                             <div class="modal-header">
@@ -72,12 +121,12 @@
                                 </div>
 
                                 <div class="mb-3">
-                                    <label class="form-label fw-bold">Mã tỉnh:</label>
-                                    <p>{{ viewForm.ma_huyen }}</p>
+                                    <label class="form-label fw-bold">Mã huyện:</label>
+                                    <p>{{ viewForm.ma_huyen || 'N/A' }}</p>
                                 </div>
-                                 <div class="mb-3">
+                                <div class="mb-3">
                                     <label class="form-label fw-bold">Huyện/Tỉnh</label>
-                                    <p>{{  viewForm.ten_huyen }} - {{  viewForm.ten_tinh }} - {{  viewForm.quoc_gia }}</p>
+                                    <p>{{ viewForm.ten_huyen }} - {{ viewForm.ten_tinh }} - {{ viewForm.quoc_gia }}</p>
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label fw-bold">Cấp hành chính:</label>
@@ -102,8 +151,7 @@
                 </div>
 
                 <!-- Modal for editing province -->
-                <div class="modal fade" id="editProvinceModal" tabindex="-1" aria-labelledby="editProvinceModalLabel"
-                    aria-hidden="true">
+                <div class="modal fade" id="editProvinceModal" tabindex="-1" aria-hidden="true">
                     <div class="modal-dialog">
                         <div class="modal-content">
                             <div class="modal-header">
@@ -114,19 +162,19 @@
                             <div class="modal-body">
                                 <form @submit.prevent="submitEditForm">
                                     <div class="mb-3">
-                                        <label for="ma_xa" class="form-label">Mã huyện</label>
+                                        <label for="ma_xa" class="form-label">Mã xã</label>
                                         <input v-model="editForm.ma_xa" type="text" class="form-control" id="ma_xa"
                                             required>
                                     </div>
                                     <div class="mb-3">
-                                        <label for="ten_xa" class="form-label">Tên huyện</label>
+                                        <label for="ten_xa" class="form-label">Tên xã</label>
                                         <input v-model="editForm.ten_xa" type="text" class="form-control" id="ten_xa"
                                             required>
                                     </div>
                                     <div class="mb-3">
                                         <label for="ma_xa" class="form-label">Mã huyện</label>
-                                        <input v-model="editForm.ma_huyen" type="text" class="form-control"
-                                            id="quoc_gia" required>
+                                        <input v-model="editForm.ma_huyen" type="text" class="form-control" id="ma_huyen"
+                                            required>
                                     </div>
                                     <div class="mb-3">
                                         <label for="cap_hanh_chinh" class="form-label">Cấp hành chính</label>
@@ -161,13 +209,14 @@
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick } from 'vue';
+
+import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
-import { ref, onMounted } from 'vue';
-import { useRoute } from 'vue-router';
 import Header from '../../../components/header/HeaderAdmin.vue';
 import Sidebar from '../../../components/sidebar/SidebarAdmin.vue';
-import { getAllXa, getXaById, updateXa, deleteXaAPI } from '../../../utils/api/api_xa';
+import { getPaginatedXa, searchXa, getXaById, updateXa, deleteXaAPI, getAllXa, searchXaAll } from '../../../utils/api/api_xa';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import { Modal } from 'bootstrap';
 
 const xaList = ref([]);
@@ -191,6 +240,7 @@ const viewForm = ref({
     ma_xa: '',
     ma_huyen: '',
     ten_huyen: '',
+    ten_xa: '',
     ten_tinh: '',
     quoc_gia: '',
     cap_hanh_chinh: '',
@@ -198,117 +248,63 @@ const viewForm = ref({
     dan_so: 0,
     mo_ta: ''
 });
-let editModal = null;
-let viewModal = null;
+const search = ref('');
+const currentPage = ref(1);
+const totalPages = ref(1);
+const limit = ref(10);
+const maxVisible = ref(5);
 
 const fetchXaData = async () => {
+    console.log("đã vào fetchXaData");
     try {
-        const response = await getAllXa();
+        const response = await getPaginatedXa(currentPage.value, limit.value);
+        console.log('Fetched Xa data:', response);
         xaList.value = response.data || response;
         console.log('Xa data fetched successfully:', xaList.value);
+        console.log('total pages:', response.totalPages);
+        totalPages.value = response.totalPages || 1;
 
-        await nextTick();
-
-        if ($.fn.DataTable.isDataTable('#provinceTable')) {
-            $('#provinceTable').DataTable().clear().destroy();
-        }
-
-        $('#provinceTable').DataTable({
-            data: xaList.value,
-            columns: [
-                { data: null, render: (data, type, row, meta) => meta.row + 1 },
-                { data: 'ma_xa' },
-                { data: 'ten_xa' },
-                { data: 'ma_huyen' },
-                {
-                    data: null,
-                    render: (data, type, row) => `${row.ten_huyen}, ${row.ten_tinh}, ${row.quoc_gia}`
-                },
-                { data: 'cap_hanh_chinh' },
-                { data: 'dien_tich' },
-                { data: 'dan_so' },
-                {
-                    data: null,
-                    render: (data) =>
-                        `<button class="btn btn-info btn-sm" data-id="${data.id}" title="Xem chi tiết"><i class="fas fa-eye"></i></button>`
-                },
-                {
-                    data: null,
-                    render: (data) =>
-                        `<button class="btn btn-primary btn-sm" data-id="${data.id}" title="Chỉnh sửa"><i class="fas fa-edit"></i></button>`
-                },
-                {
-                    data: null,
-                    render: (data) =>
-                        `<button class="btn btn-danger btn-sm" data-id="${data.id}" title="Xóa"><i class="fas fa-trash"></i></button>`
-                }
-            ],
-            pageLength: 10,
-            responsive: true,
-            destroy: true,
-            columnDefs: [
-                { orderable: false, targets: [0, 8, 9, 10] } // Adjusted targets to match column indices
-            ]
-        });
-
-        // Event delegation for buttons
-        $('#provinceTable').on('click', '.btn-info', function () {
-            const id = $(this).data('id');
-            const xa = xaList.value.find((t) => t.id === id);
-            openViewModal(xa);
-        });
-
-        $('#provinceTable').on('click', '.btn-primary', function () {
-            const id = $(this).data('id');
-            const xa = xaList.value.find((t) => t.id === id);
-            openEditModal(xa);
-        });
-
-        $('#provinceTable').on('click', '.btn-danger', function () {
-            const id = $(this).data('id');
-            deleteXa(id);
-        });
     } catch (error) {
         console.error('Error fetching Xa data:', error);
     }
 };
 
+const goToPage = (page) => {
+    if (page < 1 || page > totalPages.value) return
+    currentPage.value = page;
+    fetchXaData(page);
+};
+
+const visiblePages = computed(() => {
+    const half = Math.floor(maxVisible.value / 2);
+    let start = currentPage.value - half;
+    let end = currentPage.value + half;
+
+    if (start < 1) {
+        start = 1;
+        end = Math.min(maxVisible.value, totalPages.value);
+    } else if (end > totalPages.value) {
+        end = totalPages.value;
+        start = Math.max(1, totalPages.value - maxVisible.value + 1);
+    }
+
+    const pages = [];
+    for (let i = start; i <= end; i++) pages.push(i);
+    return pages;
+});
+
+
 const openViewModal = async (xa) => {
     try {
         const response = await getXaById(xa.id);
         const xaData = response.data || response;
-
         viewForm.value = { ...xaData };
         console.log('Xa data for view:', viewForm.value);
-
-        await nextTick(); // ⬅ Đợi Vue cập nhật DOM xong
-
-        const modalElement = document.getElementById('viewProvinceModal');
-
-        if (!viewModal) {
-            viewModal = new Modal(modalElement, {
-                backdrop: 'static',
-                keyboard: false
-            });
-        }
-
-        // Gắn sự kiện chỉ 1 lần
-        if (!modalElement.hasAttribute('data-events-attached')) {
-            modalElement.setAttribute('data-events-attached', 'true');
-
-            modalElement.addEventListener('shown.bs.modal', () => {
-                const closeButton = modalElement.querySelector('.btn-close');
-                if (closeButton) closeButton.focus();
-            });
-
-            modalElement.addEventListener('hidden.bs.modal', () => {
-                const triggerButton = document.querySelector(`#provinceTable button.btn-info[data-id="${xa.id}"]`);
-                if (triggerButton) triggerButton.focus();
-            });
-        }
-
+        const viewModal = new Modal(document.getElementById('viewProvinceModal'), {
+            backdrop: 'static',
+            keyboard: false
+        });
         viewModal.show();
-
     } catch (error) {
         console.error('Error fetching Xa data for view:', error);
     }
@@ -320,64 +316,48 @@ const openEditModal = async (xa) => {
         editForm.value = { ...xaData };
         console.log('Xa data for edit:', editForm.value);
 
-        if (!editModal) {
-            editModal = new Modal(document.getElementById('editProvinceModal'), {
-                backdrop: 'static',
-                keyboard: false
-            });
-        }
-
-        // Show modal and manage focus
+        const editModal = new Modal(document.getElementById('editProvinceModal'), {
+            backdrop: 'static',
+            keyboard: false
+        });
         editModal.show();
-        const modalElement = document.getElementById('editProvinceModal');
-        modalElement.addEventListener('shown.bs.modal', () => {
-            // Ensure aria-hidden is removed when modal is shown
-            modalElement.removeAttribute('aria-hidden');
-            // Focus the first input field
-            const firstInput = modalElement.querySelector('#ma_xa');
-            if (firstInput) {
-                firstInput.focus();
-            }
-        }, { once: true });
-
-        modalElement.addEventListener('hidden.bs.modal', () => {
-            // Restore aria-hidden when modal is hidden
-            modalElement.setAttribute('aria-hidden', 'true');
-            // Move focus back to the triggering button
-            const triggerButton = document.querySelector(`#provinceTable button.btn-primary[data-id="${xa.id}"]`);
-            if (triggerButton) {
-                triggerButton.focus();
-            }
-        }, { once: true });
     } catch (error) {
         console.error('Error fetching Xa data for edit:', error);
     }
 };
 
+const onSearch = async () => {
+    if (search.value.trim() === '') {
+        fetchXaData(1);
+    } else {
+        try {
+            const res = await searchXa(search.value, 1, limit.value);
+            xaList.value = res.data;
+            currentPage.value = res.currentPage;
+            totalPages.value = res.totalPages;
+            console.log("từ khóa tìm kiếm:", search.value);
+            console.log("Kết quả tìm kiếm:", res);
+        } catch (err) {
+            console.error(err);
+        }
+    }
+}
+
 const submitEditForm = async () => {
     try {
         await updateXa(editForm.value.id, editForm.value);
         console.log('Xa updated successfully:', editForm.value);
-
-        // Update xaList
-        const index = xaList.value.findIndex(h => h.id === editForm.value.id);
-        if (index !== -1) {
-            xaList.value[index] = { ...xaList.value[index], ...editForm.value };
-        }
-
-        // Refresh DataTable
-        const table = $('#provinceTable').DataTable();
-        table.clear();
-        table.rows.add(xaList.value);
-        table.draw();
-
-        // Close modal
-        if (editModal) {
-            editModal.hide();
-        }
+        const modalElement = document.getElementById('editProvinceModal');
+        const modal = Modal.getInstance(modalElement);
+        modal.hide();
+        await fetchXaData();
     } catch (error) {
         console.error('Error updating Xa:', error);
     }
+};
+
+const goToUser = () => {
+    router.push("/");
 };
 
 const deleteXa = async (id) => {
@@ -392,113 +372,110 @@ const deleteXa = async (id) => {
     }
 };
 
-const exportToCSV = () => {
-    const headers = ['STT', 'Mã huyện', 'Tên huyện', 'Mã Tỉnh', 'Tỉnh/Thành Phố', 'Cấp hành chính', 'Diện tích (km²)', 'Dân số (Người)', 'Mô tả'];
-    const table = $('#provinceTable').DataTable();
-    const rows = table.rows({ search: 'applied', order: 'applied' }).data().toArray().map((xa, idx) => [
-        idx + 1,
-        xa.ma_xa,
-        xa.ten_xa,
-        xa.ma_huyen,
-        `${xa.ten_huyen} - ${xa.ten_tinh} - ${xa.quoc_gia}`,
-        xa.cap_hanh_chinh,
-        xa.dien_tich,
-        xa.dan_so,
-        xa.mo_ta || ''
-    ]);
+const exportToCSV = async () => {
+    try {
+        let res;
+        if (search.value && search.value.trim() !== '') {
+            res = await searchXaAll(search.value);
+        } else {
+            res = await getAllXa();
+        }
+        const data = Array.isArray(res) ? res : res.data || [];
+        if (!data || data.length === 0) {
+            alert('Không có dữ liệu để xuất');
+            return;
+        }
 
-    const csvContent = '\uFEFF' + [headers, ...rows]
-        .map(row => row.map(item => `"${item}"`).join(','))
-        .join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', 'xa_list.csv');
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-};
-
-const exportToPDF = () => {
-    const table = $('#provinceTable').DataTable();
-    const order = table.order();
-    const sortColIndex = order?.[0]?.[0];
-    const colTitle = table.column(sortColIndex).header().textContent.trim();
-
-    let pdfTitle = 'Danh sách các huyện vùng đồng bằng sông Hồng';
-    if (colTitle === 'Dân số (Người)') pdfTitle = 'Thống kê dân số các huyện vùng đồng bằng sông Hồng';
-    else if (colTitle === 'Diện tích (km²)') pdfTitle = 'Thống kê diện tích các huyện vùng đồng bằng sông Hồng';
-
-    const headers = [
-        'STT', 'Mã huyện', 'Tên huyện', 'Mã Tỉnh', 'Tỉnh/Thành Phố', 'Cấp hành chính', 'Diện tích (km²)', 'Dân số (Người)'
-    ];
-
-    const rows = table
-        .rows({ search: 'applied', order: 'applied' })
-        .data()
-        .toArray()
-        .map((xa, idx) => [
-            { text: idx + 1, alignment: 'center' },
-            xa.ma_xa ?? '',
-            xa.ten_xa ?? '',
-            xa.ma_huyen ?? '',
-            [xa.ten_huyen, xa.ten_tinh, xa.quoc_gia].filter(Boolean).join(' - '),
-            xa.cap_hanh_chinh ?? '',
-            xa.dien_tich ?? '',
-            xa.dan_so ?? ''
+        const headers = ['STT', 'Mã xã', 'Tên xã', 'Mã huyện', 'Huyện/Tỉnh', 'Cấp hành chính', 'Diện tích (km²)', 'Dân số (Người)'];
+        const rows = data.map((x, idx) => [
+            idx + 1,
+            x.ma_xa ?? '',
+            x.ten_xa ?? '',
+            x.ma_huyen ?? '',
+            [x.ten_huyen, x.ten_tinh, x.quoc_gia].filter(Boolean).join(' - '),
+            x.cap_hanh_chinh ?? '',
+            x.dien_tich ?? '',
+            x.dan_so ?? ''
         ]);
 
-    if (rows.some(row => row.includes(undefined))) {
-        console.error('❌ Dòng có undefined:', rows);
-        return;
+        const csvContent = '\uFEFF' + [headers, ...rows]
+            .map(row => row.map(item => `"${String(item).replace(/"/g, '""')}"`).join(','))
+            .join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        const now = new Date();
+        link.setAttribute('download', `xa_all_${now.toISOString().slice(0,10)}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    } catch (err) {
+        console.error('Lỗi khi xuất CSV xã:', err);
+        alert('Lỗi khi xuất CSV. Xem console để biết thêm chi tiết.');
     }
+};
 
-    const docDefinition = {
-        pageSize: 'A4',
-        pageOrientation: 'landscape', // Changed to landscape to fit table
-        content: [
-            { text: pdfTitle.toUpperCase(), style: 'header', alignment: 'center', margin: [0, 0, 0, 10] },
-            {
-                table: {
-                    headerRows: 1,
-                    widths: [20, 80, 100, 80, 120, 80, 80, 80],
-                    body: [
-                        headers.map(h => ({ text: h, bold: true, fillColor: '#eeeeee' })),
-                        ...rows
-                    ]
-                },
-                layout: 'lightHorizontalLines'
-            }
-        ],
-        styles: {
-            header: {
-                fontSize: 14,
-                bold: true
-            }
-        },
-        defaultStyle: {
-            font: 'Roboto',
-            fontSize: 10
+const exportToPDF = async () => {
+    try {
+        let res;
+        if (search.value && search.value.trim() !== '') {
+            res = await searchXaAll(search.value);
+        } else {
+            res = await getAllXa();
         }
-    };
+        const data = Array.isArray(res) ? res : res.data || [];
+        if (!data || data.length === 0) {
+            alert('Không có dữ liệu để xuất');
+            return;
+        }
 
-    pdfMake.createPdf(docDefinition).download(`${pdfTitle.replace(/\s+/g, '_').toLowerCase()}.pdf`);
+        const doc = new jsPDF('landscape');
+        const title = 'Danh sách xã';
+        doc.setFontSize(14);
+        doc.text(title, 14, 20);
+
+        const columns = [
+            { header: 'STT', dataKey: 'stt' },
+            { header: 'Mã xã', dataKey: 'ma_xa' },
+            { header: 'Tên xã', dataKey: 'ten_xa' },
+            { header: 'Mã huyện', dataKey: 'ma_huyen' },
+            { header: 'Huyện/Tỉnh', dataKey: 'huyen_tinh' },
+            { header: 'Cấp hành chính', dataKey: 'cap_hanh_chinh' },
+            { header: 'Diện tích (km²)', dataKey: 'dien_tich' },
+            { header: 'Dân số (Người)', dataKey: 'dan_so' }
+        ];
+
+        const rows = data.map((x, idx) => ({
+            stt: idx + 1,
+            ma_xa: x.ma_xa ?? '',
+            ten_xa: x.ten_xa ?? '',
+            ma_huyen: x.ma_huyen ?? '',
+            huyen_tinh: [x.ten_huyen, x.ten_tinh, x.quoc_gia].filter(Boolean).join(' - '),
+            cap_hanh_chinh: x.cap_hanh_chinh ?? '',
+            dien_tich: x.dien_tich ?? '',
+            dan_so: x.dan_so ?? ''
+        }));
+
+        autoTable(doc, {
+            head: [columns.map(c => c.header)],
+            body: rows.map(r => columns.map(c => r[c.dataKey])),
+            startY: 26,
+            styles: { fontSize: 9 },
+            headStyles: { fillColor: [22, 160, 133] }
+        });
+
+        const now = new Date();
+        doc.save(`xa_all_${now.toISOString().slice(0,10)}.pdf`);
+    } catch (err) {
+        console.error('Lỗi khi xuất PDF xã:', err);
+        alert('Lỗi khi xuất PDF. Xem console để biết thêm chi tiết.');
+    }
 };
 
 onMounted(() => {
     fetchXaData();
-    // Initialize modals
-    editModal = new Modal(document.getElementById('editProvinceModal'), {
-        backdrop: 'static',
-        keyboard: false
-    });
-    viewModal = new Modal(document.getElementById('viewProvinceModal'), {
-        backdrop: 'static',
-        keyboard: false
-    });
 });
 </script>
 <style scoped>

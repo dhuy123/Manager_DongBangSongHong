@@ -35,12 +35,33 @@ const searchAccount = async (query, page, limit) => {
             ho_ten ILIKE $1 OR
             role ILIKE $1 OR
             gioi_tinh ILIKE $1 OR
-            sdt ILIKE $1
+            CAST(sdt AS TEXT) ILIKE $1
             LIMIT $2 OFFSET $3
         `, [keyword, limit, offset]);
         return result.rows;
     } catch (error) {
         console.error("Error searching accounts:", error);
+        throw new Error("Database error");
+    }
+};
+
+// Tìm kiếm trả về tất cả kết quả khớp (không phân trang)
+const searchAccountAll = async (query) => {
+    try {
+        const keyword = `%${query}%`;
+        const result = await db.query(`
+            SELECT * FROM "user"
+            WHERE 
+            CAST (id AS TEXT) ILIKE $1 OR
+            tai_khoan ILIKE $1 OR
+            ho_ten ILIKE $1 OR
+            role ILIKE $1 OR
+            gioi_tinh ILIKE $1 OR
+           CAST(sdt AS TEXT) ILIKE $1
+        `, [keyword]);
+        return result.rows;
+    } catch (error) {
+        console.error("Error searching accounts (all):", error);
         throw new Error("Database error");
     }
 };
@@ -109,7 +130,9 @@ const deleteAccount = async (id) => {
 module.exports ={
    // getAllAccount,
     getPaginationAccount,
+    getAllAccount,
     searchAccount,
+    searchAccountAll,
     getAccountById,
     createAccount,
     updateAccount,

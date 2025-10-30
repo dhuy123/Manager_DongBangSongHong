@@ -27,16 +27,16 @@
             <tr v-for="(huyen, index) in huyenList" :key="huyen.id">
               <td>{{ index + 1 }}</td>
               <td>{{ huyen.ma_huyen }}</td>
-              <td>{{ huyen.duong_dan }}></td>
+              <td><img :src="huyen.duong_dan" alt="Ảnh" width="60" /></td>
               <td>{{ huyen.mo_ta }}</td>
               <td>
-                <button class="btn btn-info btn-sm" :data-id="huyen.id"><i class="fas fa-eye"></i></button>
+                <button class="btn btn-info btn-sm" @click="openViewModal(huyen)"><i class="fas fa-eye"></i></button>
               </td>
               <td>
-                <button class="btn btn-warning btn-sm"><i class="fas fa-edit"></i></button>
+                <button class="btn btn-warning btn-sm" @click="openEditModal(huyen)"><i class="fas fa-edit"></i></button>
               </td>
               <td>
-                <button class="btn btn-danger btn-sm"><i class="fas fa-trash"></i></button>
+                <button class="btn btn-danger btn-sm" @click="deleteHuyen(huyen.id)"><i class="fas fa-trash"></i></button>
               </td>
             </tr>
           </tbody>
@@ -58,7 +58,7 @@
                 </div>
                 <div class="mb-3">
                   <label class="form-label fw-bold">Hình ảnh:</label>
-                 <p><img :src="viewForm.duong_dan" alt="Hình ảnh" width="300" /></p>
+                  <p><img :src="viewForm.duong_dan" alt="Hình ảnh" width="300" /></p>
                 </div>
                 <div class="mb-3">
                   <label class="form-label fw-bold">Mô tả:</label>
@@ -76,7 +76,7 @@
           <div class="modal-dialog">
             <div class="modal-content">
               <div class="modal-header">
-                <h5 class="modal-title" id="editProvinceModalLabel"> {{ isCreate ? 'Thêm mới ảnh' : ' Chỉnh sửa thông tin ảnh ' }}</h5>
+                <h5 class="modal-title" > Chỉnh sửa thông tin ảnh </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
               </div>
               <div class="modal-body">
@@ -108,10 +108,6 @@
 <script setup>
 import { ref, onMounted, nextTick } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import $ from 'jquery';
-import 'datatables.net';
-import 'datatables.net-bs5';
-import 'datatables.net-bs5/css/dataTables.bootstrap5.min.css';
 import Header from '../../../components/header/HeaderAdmin.vue';
 import Sidebar from '../../../components/sidebar/SidebarAdmin.vue';
 import {
@@ -125,7 +121,6 @@ import { Modal } from 'bootstrap';
 
 // Reactive state
 const huyenList = ref([]);
-const router = useRouter();
 const route = useRoute();
 const editForm = ref({
   id: null,
@@ -152,70 +147,9 @@ const fetchImgHuyenData = async (ma_huyen) => {
     const response = await getImgHuyenByMaHuyen(ma_huyen);
     huyenList.value = Array.isArray(response.data) ? response.data : response;
     console.log('Tinh data fetched:', huyenList.value);
-
-    await nextTick(); // Wait for DOM update
-
-    // Destroy existing DataTable if initialized
-    if (dataTable) {
-      dataTable.destroy();
-      dataTable = null;
-    }
-
-    // Initialize DataTable
-    dataTable = $('#provinceTable').DataTable({
-      data: huyenList.value,
-      columns: [
-        { data: null, render: (data, type, row, meta) => meta.row + 1 },
-        { data: 'ma_huyen' },
-        {
-          data: 'duong_dan',
-          render: (data) => `<img src="${data}" width="60" alt="Hình tỉnh" />`
-        },
-        { data: 'mo_ta' },
-        {
-          data: null,
-          render: (data) =>
-            `<button class="btn btn-info btn-sm" data-id="${data.id}" title="Xem chi tiết"><i class="fas fa-eye"></i></button>`
-        },
-        {
-          data: null,
-          render: (data) =>
-            `<button class="btn btn-primary btn-sm" data-id="${data.id}" title="Chỉnh sửa"><i class="fas fa-edit"></i></button>`
-        },
-        {
-          data: null,
-          render: (data) =>
-            `<button class="btn btn-danger btn-sm" data-id="${data.id}" title="Xóa"><i class="fas fa-trash"></i></button>`
-        }
-      ],
-      pageLength: 10,
-      responsive: true,
-      destroy: true,
-      columnDefs: [{ orderable: false, targets: [0, 4, 5, 6] }],
-    });
-
-    // Attach event listeners for buttons
-    $('#provinceTable').off('click').on('click', '.btn-info', function () {
-      const id = $(this).data('id');
-      const tinh = huyenList.value.find((t) => t.id === id);
-      openViewModal(tinh);
-    });
-
-    $('#provinceTable').on('click', '.btn-primary', function () {
-      const id = $(this).data('id');
-      const tinh = huyenList.value.find((t) => t.id === id);
-      openEditModal(tinh);
-    });
-
-    $('#provinceTable').on('click', '.btn-danger', function () {
-      const id = $(this).data('id');
-      deleteTinh(id);
-    });
-  } catch (error) {
-    console.error('Error fetching Tinh data:', error);
-  //  alert('Lỗi khi tải dữ liệu tỉnh. Vui lòng thử lại.');
-  } finally {
-    isLoading.value = false; // Hide loading state
+   } catch (err) {
+    console.error(err);
+    alert('Không thể tải danh sách tỉnh.');
   }
 };
 
@@ -262,44 +196,35 @@ const submitEditForm = async () => {
     isLoading.value = true; // Show loading state
     if (isCreate.value) {
       await createImgHuyen(editForm.value);
-      
+
       console.log('Tinh created:', editForm.value);
     } else {
       await updateImgHuyen(editForm.value.id, editForm.value);
-     
+
       console.log('Tinh updated:', editForm.value);
     }
     editModal?.hide();
     await fetchImgHuyenData(route.params.ma_huyen); // Refresh table
   } catch (error) {
     console.error('Error saving Tinh:', error);
-  
+
   } finally {
     isLoading.value = false; // Hide loading state
   }
 };
 
 // Delete province
-const deleteTinh = async (id) => {
-  if (confirm('Bạn có chắc chắn muốn xóa tỉnh này?')) {
-    try {
-      isLoading.value = true; // Show loading state
-      await deleteImgHuyenAPI(id);
-     
-      console.log('Tinh deleted:', id);
-      await fetchImgHuyenData(route.params.ma_huyen); // Refresh table
-    } catch (error) {
-      console.error('Error deleting Tinh:', error);
-    
-    } finally {
-      isLoading.value = false; // Hide loading state
-    }
-  }
+const deleteHuyen = async (id) => {
+    await deleteImgHuyenAPI(id);
+    await fetchImgHuyenData(route.params.ma_huyen);
 };
 
 // Initialize modals and fetch data on mount
 onMounted(async () => {
-  console.log('TinhView mounted');
+  const maHuyen = route.params.ma_huyen;
+  if (maHuyen) {
+    await fetchImgHuyenData(maHuyen);
+  }
   editModal = new Modal(document.getElementById('editProvinceModal'), {
     backdrop: 'static',
     keyboard: false
@@ -308,7 +233,6 @@ onMounted(async () => {
     backdrop: 'static',
     keyboard: false
   });
-  await fetchImgHuyenData(route.params.ma_huyen);
 });
 </script>
 

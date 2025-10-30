@@ -10,12 +10,49 @@ const getAllAccount = async () =>{
   }
 }
 
+const getPaginationAccount = async (page = 1, limit = 10) => {
+    try {  
+        const offset = (page - 1) * limit;
+        const result = await db.query( `SELECT * FROM "user"
+          LIMIT $1 OFFSET $2`,
+          [limit, offset]);
+        return result.rows;
+    } catch (error) {
+        console.error("Error fetching paginated accounts:", error);
+        throw new Error("Database error");
+    }
+};
+
+const searchAccount = async (query, page, limit) => {
+    try {
+        const offset = (page - 1) * limit;
+        const keyword = `%${query}%`;
+        const result = await db.query(`
+            SELECT * FROM "user"
+            WHERE 
+            CAST (id AS TEXT) ILIKE $1 OR
+            tai_khoan ILIKE $1 OR
+            ho_ten ILIKE $1 OR
+            role ILIKE $1 OR
+            gioi_tinh ILIKE $1 OR
+            sdt ILIKE $1
+            LIMIT $2 OFFSET $3
+        `, [keyword, limit, offset]);
+        return result.rows;
+    } catch (error) {
+        console.error("Error searching accounts:", error);
+        throw new Error("Database error");
+    }
+};
+
 const getAccountById = async (id) => {
+    console.log("🔍 Fetching account with ID:", id);
     try {  
         const result = await db.query(`SELECT * FROM "user" WHERE id = $1`, [id]);
         if (result.rows.length === 0) {
             throw new Error("Account not found");
         }
+        console.log("🔍 Fetched account data:", result.rows[0]);
         return result.rows[0];
     } catch (error) {
         console.error("Error fetching account by ID:", error); 
@@ -70,7 +107,9 @@ const deleteAccount = async (id) => {
 
 
 module.exports ={
-    getAllAccount,
+   // getAllAccount,
+    getPaginationAccount,
+    searchAccount,
     getAccountById,
     createAccount,
     updateAccount,

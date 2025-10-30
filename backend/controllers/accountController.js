@@ -10,13 +10,43 @@ const getAllAccount = async (req, res) => {
     }
 }
 
+const getPaginatedAccount = async (req, res) => {
+    const { page = 1, limit = 10 } = req.query;
+    try {
+        const result = await accountModel.getPaginationAccount(parseInt(page), parseInt(limit));
+        res.status(200).json(result);
+    }
+    catch (error) {
+        console.error("Error fetching paginated accounts:", error);
+        res.status(500).json({ message: "Lỗi máy chủ", error: error.message });
+    }
+};
+
+const searchAccount = async (req, res) => {
+    try {
+        const query = req.query.query;
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        console.log("🔍 Từ khóa tìm kiếm:", query)
+        if (!query) {
+            return res.status(400).json({ message: "Thiếu từ khóa tìm kiếm" });
+        }
+        const result = await accountModel.searchAccount(query, page, limit);
+        res.status(200).json(result);
+    } catch (error) {
+        console.error("Error searching accounts:", error);
+        res.status(500).json({ message: "Lỗi máy chủ", error: error.message });
+    }   
+};
+
 const getAccountById = async (req, res) => {
     const { id } = req.params;
+    console.log("🔍 Lấy thông tin tài khoản với ID:", id);
     try {
         const response = await accountModel.getAccountById(id);
         res.status(200).json(response);
     } catch (error) {
-        console.error("Error fetching district by ID:", error);
+        console.error("Error fetching account by ID:", error);
         res.status(500).json({ message: "Lỗi máy chủ", error: error.message });
     }
 }
@@ -59,7 +89,9 @@ const deleteAccount = async (req, res) => {
 }
 
 module.exports = {
-    getAllAccount,
+    //getAllAccount,
+    getPaginatedAccount,
+    searchAccount,
     getAccountById,
     createAccount,
     updateAccount,

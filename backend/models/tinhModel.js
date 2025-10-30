@@ -108,7 +108,6 @@ const getTinhById = async (id) => {
 
 const updateTinh = async (id, data) => {
   try {
-    // 1️⃣ Lấy dữ liệu cũ
     const oldResult = await db.query(`
       SELECT 
         t.*,
@@ -124,9 +123,8 @@ const updateTinh = async (id, data) => {
     }
 
     const oldData = oldResult.rows[0];
-    console.log("📋 Dữ liệu cũ trước khi update:", oldData);
+    console.log(" Dữ liệu cũ trước khi update:", oldData);
 
-    // 2️⃣ Partial update: nếu không gửi field thì dùng dữ liệu cũ
     const quoc_gia = data.quoc_gia ?? oldData.quoc_gia;
     const ten_tinh = data.ten_tinh ?? oldData.ten_tinh;
     const cap_hanh_chinh = data.cap_hanh_chinh ?? oldData.cap_hanh_chinh;
@@ -135,7 +133,6 @@ const updateTinh = async (id, data) => {
     const dan_so = data.dan_so ?? oldData.dan_so;
     const mo_ta = data.mo_ta ?? oldData.mo_ta;
 
-    // 3️⃣ Update
     const result = await db.query(
       `UPDATE "tinh" 
        SET quoc_gia=$1, ten_tinh=$2, cap_hanh_chinh=$3, ma_tinh=$4, dien_tich=$5, dan_so=$6, mo_ta=$7
@@ -144,10 +141,10 @@ const updateTinh = async (id, data) => {
       [quoc_gia, ten_tinh, cap_hanh_chinh, ma_tinh, dien_tich, dan_so, mo_ta, id]
     );
 
-    console.log("✅ Cập nhật tỉnh thành công:", result.rows[0]);
+    console.log("Cập nhật tỉnh thành công:", result.rows[0]);
     return result.rows[0];
   } catch (error) {
-    console.error("❌ Chi tiết lỗi SQL:", error.message);
+    console.error("Chi tiết lỗi SQL:", error.message);
     throw new Error("Database error");
   }
 };

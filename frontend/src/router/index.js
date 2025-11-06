@@ -11,6 +11,7 @@ import User from '../views/UserView.vue'
 import Detail from '../views/DetailView.vue'
 import DetailTinh from '../views/admin/DetailTinhView.vue'
 import DetailHuyen from '../views/admin/huyen/DetailHuyenView.vue'
+import DetailXa from '../views/admin/xa/DetailXaView.vue'
 import RegisterView from '../views/RegisterView.vue'
 
 const router = createRouter({
@@ -76,6 +77,11 @@ const router = createRouter({
       path: '/admin/xa',
       name: 'xa',
       component: XaView,
+    },
+    {
+      path: '/detailXa/:id',
+      name: 'detailXa',
+      component: DetailXa,
     },
     {
       path: '/admin/account',

@@ -80,7 +80,7 @@
                   ? `/detailTinh/${item.properties.id}`
                   : item.layer === 'huyen'
                     ? `/detailHuyen/${item.properties.id}`
-                    : '#'">
+                    : '/detailXa/' + item.properties.id">
                   Chi tiết
                 </router-link>
 

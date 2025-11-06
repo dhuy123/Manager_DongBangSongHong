@@ -3,6 +3,9 @@ import axios from 'axios';
 
 const API_BASE_URL = 'http://localhost:5000/api'; // Định nghĩa URL API
 
+// src/config.js
+const FILE_BASE_URL = 'http://localhost:5000';
+
 //  const API_BASE_URL = 'https://048abb8bd81b.ngrok-free.app/api';
 
 const apiInstance = axios.create({
@@ -14,4 +17,4 @@ const apiInstance = axios.create({
     }
 });
 
-export { apiInstance, API_BASE_URL };
+export { apiInstance, API_BASE_URL , FILE_BASE_URL};

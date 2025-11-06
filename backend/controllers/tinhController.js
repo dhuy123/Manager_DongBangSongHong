@@ -100,6 +100,26 @@ const deleteTinh = async (req, res) => {
   }
 }
 
+const exportGeoJson = async (req, res) => {
+  const { ma_tinh } = req.params;
+  console.log("Xuất GeoJSON cho mã tỉnh:", ma_tinh);
+  try {
+    const geojson = await tinhModel.exportGeoJson(ma_tinh);
+    // Chuyển geojson thành chuỗi JSON
+    const data = JSON.stringify(geojson, null, 2);
+
+    // Cài header để trình duyệt tải file
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Content-Disposition', `attachment; filename=${ma_tinh}.geojson`);
+    console.log("Gửi dữ liệu GeoJSON:", res.getHeaders());
+    // Gửi dữ liệu
+    res.send(data);
+  } catch (error) {
+    console.error("Error exporting GeoJSON:", error);
+    res.status(500).json({ message: "Lỗi máy chủ", error: error.message });
+  }
+};
+
 module.exports = {
   getAllTinh,
   getTinhById,
@@ -108,4 +128,5 @@ module.exports = {
   getPaginatedTinh,
   searchTinh,
   searchTinhAll,
+  exportGeoJson,
 }

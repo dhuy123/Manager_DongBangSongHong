@@ -96,6 +96,7 @@
                 <p><strong>Diện tích:</strong> {{ viewForm.dien_tich }}</p>
                 <p><strong>Dân số:</strong> {{ viewForm.dan_so }}</p>
                 <p><strong>Mô tả:</strong> {{ viewForm.mo_ta }}</p>
+                <p><strong>GeoJSON path:</strong> {{ viewForm.geojson_path }}</p>
               </div>
             </div>
           </div>
@@ -135,11 +136,17 @@
                     <label class="form-label">Dân số</label>
                     <input v-model="editForm.dan_so" type="number" class="form-control" />
                   </div>
+                 
                   <div class="mb-3">
                     <label class="form-label">Mô tả</label>
                     <textarea v-model="editForm.mo_ta" class="form-control"></textarea>
                   </div>
                   <button class="btn btn-primary" type="submit">Lưu</button>
+                  <!-- <div class="mb-3">
+                    <label class="form-label">GeoJSON path</label>
+                    <input v-model="editForm.geojson_path" type="text" class="form-control"
+                      placeholder="ví dụ: geojson/mesh2d_day00.geojson" />
+                  </div> -->
                 </form>
               </div>
             </div>
@@ -163,6 +170,7 @@ import {
   searchTinh,
   getAllTinh,
   searchTinhAll,
+
 } from "../../utils/api/api_tinh.js";
 // PDF generation
 import jsPDF from "jspdf";
@@ -180,7 +188,8 @@ const editForm = ref({
   cap_hanh_chinh: '',
   dien_tich: 0,
   dan_so: 0,
-  mo_ta: ''
+  mo_ta: '',
+  geojson_path: ''
 });
 const viewForm = ref({
   id: null,
@@ -190,7 +199,8 @@ const viewForm = ref({
   cap_hanh_chinh: '',
   dien_tich: 0,
   dan_so: 0,
-  mo_ta: ''
+  mo_ta: '',
+  geojson_path: ''
 });
 
 const search = ref('');
@@ -332,7 +342,7 @@ const exportToCSV = async () => {
     const link = document.createElement('a');
     link.href = url;
     const now = new Date();
-    link.setAttribute('download', `tinh_all_${now.toISOString().slice(0,10)}.csv`);
+    link.setAttribute('download', `tinh_all_${now.toISOString().slice(0, 10)}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -385,7 +395,7 @@ const exportToPDF = async () => {
       dan_so: t.dan_so ?? ''
     }));
 
-   autoTable(doc, {
+    autoTable(doc, {
       head: [columns.map((c) => c.header)],
       body: rows.map((r) => columns.map((c) => r[c.dataKey])),
       startY: 26,
@@ -394,7 +404,7 @@ const exportToPDF = async () => {
     });
 
     const now = new Date();
-    doc.save(`tinh_all_${now.toISOString().slice(0,10)}.pdf`);
+    doc.save(`tinh_all_${now.toISOString().slice(0, 10)}.pdf`);
   } catch (err) {
     console.error('Lỗi khi xuất PDF:', err);
     alert('Lỗi khi xuất PDF. Xem console để biết thêm chi tiết.');

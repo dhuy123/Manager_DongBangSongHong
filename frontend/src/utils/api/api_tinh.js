@@ -29,6 +29,21 @@ export const getPaginatedTinh= async (page = 1, limit = 10) => {
   }
 };
 
+
+
+export const exportGeoJson = async (ma_tinh) => {
+    try {
+        const response = await apiInstance.get(`/tinh/export-geojson/${ma_tinh}`, {
+            responseType: 'blob' // Đặt responseType là 'blob' để nhận file
+        });
+        console.log("Xuất GeoJSON thành công:", response.data);
+        return response.data; // Trả về blob của file GeoJSON
+    } catch (error) {
+        console.error("Error exporting GeoJSON:", error);
+        throw new Error("Lỗi khi xuất GeoJSON");
+    }
+};
+
 export const getTinhById = async (id) => {
     try {
         const response = await apiInstance.get(`/tinh/${id}`);

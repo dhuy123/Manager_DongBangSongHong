@@ -296,6 +296,7 @@ const submitEditForm = async () => {
         const modalEl = document.getElementById('editProvinceModal');
         const editModal = Modal.getInstance(modalEl);
         editModal.hide();
+        fetchHuyenData(1)
     } catch (error) {
         console.error('Error updating Huyen:', error);
     }

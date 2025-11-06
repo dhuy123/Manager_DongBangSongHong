@@ -11,11 +11,13 @@ const accountRoutes = require('./routers/accountRouters');
 const huyenRoutes = require('./routers/huyenRouters');
 const imgHuyenRoutes = require('./routers/imgHuyenRouters');
 const xaRoutes = require('./routers/xaRouters');
+const path = require('path');
 
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+app.use("/public", express.static(path.join(__dirname, "public")));
 
 app.use('/api/tinh', tinhRoutes);
 app.use('/api/img_tinh', imgTinhRoutes);

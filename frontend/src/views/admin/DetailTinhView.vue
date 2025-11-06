@@ -56,6 +56,14 @@
                                 <span v-if="featureInfo.dan_so">{{ featureInfo.dan_so.toLocaleString() }} người</span>
                                 <span v-else>Chưa cập nhật</span>
                             </p>
+                            <p>
+                                <a v-if="featureInfo.ma_tinh" :href="geoJsonUrl"
+                                    @click.prevent="downloadGeoJson(featureInfo.ma_tinh)" download>
+                                    Tải GeoJSON
+                                </a>
+                                <span v-else>Chưa có</span>
+                            </p>
+
                         </div>
 
 
@@ -82,17 +90,17 @@
                         v-html="featureInfo.mo_ta.replace(/\n/g, '<br>')"></div>
 
                     <p><strong>Hình ảnh:</strong></p>
-                                       <div class="image-gallery">
+                    <div class="image-gallery">
                         <div class="image-item" v-for="(img, idx) in featureInfo?.hinh_anh_tinh" :key="idx">
                             <img :src="img.duong_dan" :alt="img.mo_ta || 'Ảnh tỉnh'" style="cursor:pointer;"
-                                 @click="openImgModal(img.duong_dan)" />
+                                @click="openImgModal(img.duong_dan)" />
                             <p class="image-caption">{{ img.mo_ta }}</p>
                         </div>
                         <div v-if="!featureInfo?.hinh_anh_tinh || featureInfo.hinh_anh_tinh.length === 0">
                             <em>Chưa có hình ảnh</em>
                         </div>
                     </div>
-                    
+
                     <!-- Modal xem ảnh lớn -->
                     <div v-if="showImgModal" class="img-modal" @click.self="closeImgModal">
                         <img :src="selectedImg" style="max-width:90vw;max-height:90vh;display:block;margin:auto;" />
@@ -113,12 +121,12 @@ import { useRouter, useRoute } from 'vue-router'
 const router = useRouter()
 const route = useRoute();
 
-import { getTinhById } from '../../utils/api/api_tinh'
+import { getTinhById, exportGeoJson } from '../../utils/api/api_tinh'
 
 const showImgModal = ref(false);
 const selectedImg = ref('');
 
-const mapContainer = ref(null);
+const geoJsonUrl = ref('');
 const featureInfo = ref(null); // Sử dụng mảng để lưu thông tin từ nhiều lớp
 const activeTab = ref('info'); // Điều khiển tab
 let layers = {
@@ -195,18 +203,38 @@ const fetchTinhData = async () => {
         console.error('Lỗi khi lấy dữ liệu tỉnh:', error);
     }
 };
+
+const downloadGeoJson = async (ma_tinh) => {
+    try {
+        const blob = await exportGeoJson(ma_tinh);
+        // Giải phóng URL cũ nếu có
+        if (geoJsonUrl.value) URL.revokeObjectURL(geoJsonUrl.value);
+        // Tạo URL tạm thời từ blob
+        geoJsonUrl.value = URL.createObjectURL(blob);
+        // Tạo click ảo để tải file
+        const a = document.createElement('a');
+        a.href = geoJsonUrl.value;
+        a.download = `${ma_tinh}.geojson`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+    } catch (error) {
+        console.error('Lỗi tải GeoJSON:', error);
+    }
+};
+
 const goToUserTab = () => {
     activeTab.value = 'layers'
     router.push('/')
 }
 
 const openImgModal = (url) => {
-  selectedImg.value = url;
-  showImgModal.value = true;
+    selectedImg.value = url;
+    showImgModal.value = true;
 };
 const closeImgModal = () => {
-  showImgModal.value = false;
-  selectedImg.value = '';
+    showImgModal.value = false;
+    selectedImg.value = '';
 };
 
 
@@ -385,8 +413,11 @@ p {
 
 .img-modal {
     position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.7);
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
     z-index: 9999;
     display: flex;
     align-items: center;
@@ -398,18 +429,21 @@ p {
     height: 400px;
     object-fit: cover;
     border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .image-item img {
     width: 100%;
-    height: 200px;  
-    object-fit: contain; /* hoặc cover nếu muốn cắt cho vừa khung */
+    height: 200px;
+    object-fit: contain;
+    /* hoặc cover nếu muốn cắt cho vừa khung */
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     transition: transform 0.3s ease;
-    background: #f8f8f8; /* giúp ảnh nhỏ không bị nền trắng */
-    max-height: 250px;   /* Giới hạn chiều cao tối đa, có thể điều chỉnh */
+    background: #f8f8f8;
+    /* giúp ảnh nhỏ không bị nền trắng */
+    max-height: 250px;
+    /* Giới hạn chiều cao tối đa, có thể điều chỉnh */
 }
 
 .image-item img:hover {

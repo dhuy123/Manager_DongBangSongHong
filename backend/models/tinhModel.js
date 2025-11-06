@@ -52,7 +52,8 @@ const searchTinh = async (query, page, limit) => {
         quoc_gia ILIKE $1 OR
         cap_hanh_chinh ILIKE $1 OR
         CAST(dan_so AS TEXT) ILIKE $1 OR
-        CAST(dien_tich AS TEXT) ILIKE $1
+        CAST(dien_tich AS TEXT) ILIKE $1 OR
+        geojson_path ILIKE $1
     `, [keyword]);
     const totalRecords = parseInt(countResult.rows[0].count, 10);
     const totalPages = Math.ceil(totalRecords / limit);
@@ -65,7 +66,8 @@ const searchTinh = async (query, page, limit) => {
         quoc_gia ILIKE $1 OR
         cap_hanh_chinh ILIKE $1 OR
         CAST(dan_so AS TEXT) ILIKE $1 OR
-        CAST(dien_tich AS TEXT) ILIKE $1
+        CAST(dien_tich AS TEXT) ILIKE $1 OR
+        geojson_path ILIKE $1
       ORDER BY ten_tinh
       LIMIT $2 OFFSET $3
     `, [keyword, limit, offset]);
@@ -158,8 +160,8 @@ const updateTinh = async (id, data) => {
 
     const result = await db.query(
       `UPDATE "tinh" 
-       SET quoc_gia=$1, ten_tinh=$2, cap_hanh_chinh=$3, ma_tinh=$4, dien_tich=$5, dan_so=$6, mo_ta=$7
-       WHERE id=$8
+       SET quoc_gia=$1, ten_tinh=$2, cap_hanh_chinh=$3, ma_tinh=$4, dien_tich=$5, dan_so=$6, mo_ta=$7,
+       WHERE id=$9
        RETURNING *`,
       [quoc_gia, ten_tinh, cap_hanh_chinh, ma_tinh, dien_tich, dan_so, mo_ta, id]
     );
@@ -185,6 +187,51 @@ const deleteTinh = async (id) => {
   }
 };
 
+const exportGeoJson = async (ma_tinh) => {
+  console.log("Xuất GeoJSON cho mã tỉnh:", ma_tinh);
+  try {
+    const result = await db.query(`
+      SELECT json_build_object(
+        'type', 'FeatureCollection',
+        'features', COALESCE(json_agg(
+          json_build_object(
+            'type', 'Feature',
+            'geometry', ST_AsGeoJSON(ST_GeomFromEWKB(decode(geom, 'hex')))::json,
+            'properties', json_build_object(
+              'id', id,
+              'ma_tinh', ma_tinh,
+              'ten_tinh', ten_tinh,
+              'dan_so', dan_so,
+              'dien_tich', dien_tich,
+              'cap_hanh_chinh', cap_hanh_chinh,
+              'mo_ta', mo_ta,
+              'quoc_gia', quoc_gia
+            )
+          )
+        ), '[]'::json)
+      ) AS geojson
+      FROM "tinh"
+      WHERE ma_tinh ILIKE $1;
+    `, [ma_tinh]); // bind parameter, tránh SQL injection
+
+    console.log("Kết quả truy vấn xuất GeoJSON:", result);
+    if (!result.rows.length || !result.rows[0].geojson) {
+      console.log("Không tìm thấy feature nào cho mã tỉnh:", ma_tinh);
+      return { type: "FeatureCollection", features: [] };
+    }
+
+    console.log("Kết quả xuất GeoJSON:", result.rows[0].geojson);
+    return result.rows[0].geojson;
+
+  } catch (error) {
+    console.error("Error exporting GeoJSON:", error);
+    throw new Error("Database error: " + error.message);
+  }
+};
+
+
+
+
 module.exports = {
   getAllTinh,
   getTinhById,
@@ -192,5 +239,6 @@ module.exports = {
   deleteTinh,
   getPaginationTinh,
   searchTinh,
-  searchTinhAll
+  searchTinhAll,
+  exportGeoJson,
 }

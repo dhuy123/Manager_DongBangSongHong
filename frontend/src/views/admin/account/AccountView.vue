@@ -438,6 +438,10 @@ const exportToPDF = async () => {
     }
 };
 
+const goToUser = () => {
+  router.push("/");
+};
+
 
 onMounted(() => {
     fetchAccountData();

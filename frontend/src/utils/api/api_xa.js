@@ -95,3 +95,14 @@ export const deleteXaAPI = async(id) => {
         console.error("lỗi xóa thông tin xã",error);
     }
 }
+export const exportGeoJson = async (id) => {
+    try {
+        const response = await apiInstance.get(`/xa/export-geojson/${id}`,
+            { responseType: 'blob' }
+        );
+console.log("Export GeoJSON response:", response.data);
+        return response.data;
+    } catch (error) {
+        console.error("lỗi xuất GeoJSON xã", error);
+    }
+}

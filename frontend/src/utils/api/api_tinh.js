@@ -31,9 +31,9 @@ export const getPaginatedTinh= async (page = 1, limit = 10) => {
 
 
 
-export const exportGeoJson = async (ma_tinh) => {
+export const exportGeoJson = async (id) => {
     try {
-        const response = await apiInstance.get(`/tinh/export-geojson/${ma_tinh}`, {
+        const response = await apiInstance.get(`/tinh/export-geojson/${id}`, {
             responseType: 'blob' // Đặt responseType là 'blob' để nhận file
         });
         console.log("Xuất GeoJSON thành công:", response.data);
@@ -48,7 +48,7 @@ export const getTinhById = async (id) => {
     try {
         const response = await apiInstance.get(`/tinh/${id}`);
         console.log("Tỉnh tìm thấy:", response.data);
-         console.log("👉 Base URL API:", apiInstance.defaults.baseURL);
+         console.log(" Base URL API:", apiInstance.defaults.baseURL);
         return response.data; // Trả về tỉnh nếu tìm thấy
     } catch (error) {
         console.error("Error fetching province by ID:", error);
@@ -60,9 +60,9 @@ export const updateTinh = async (id, data) => {
     try {
         // Tạo bản sao và loại bỏ geom nếu có
         const payload = { ...data };
-        delete payload.geom;  // 🛑 Xoá geometry
+        delete payload.geom; 
 
-        const response = await apiInstance.put(`/tinh/${id}`, payload);
+        const response = await apiInstance.patch(`/tinh/${id}`, payload);
         console.log("Cập nhật tỉnh thành công:", response.data);
          console.log("👉 Base URL API:", apiInstance.defaults.baseURL);
         return response.data; // Trả về tỉnh đã cập nhật

@@ -96,7 +96,6 @@
                 <p><strong>Diện tích:</strong> {{ viewForm.dien_tich }}</p>
                 <p><strong>Dân số:</strong> {{ viewForm.dan_so }}</p>
                 <p><strong>Mô tả:</strong> {{ viewForm.mo_ta }}</p>
-                <p><strong>GeoJSON path:</strong> {{ viewForm.geojson_path }}</p>
               </div>
             </div>
           </div>
@@ -130,13 +129,13 @@
                   </div>
                   <div class="mb-3">
                     <label class="form-label">Diện tích</label>
-                    <input v-model="editForm.dien_tich" type="number" class="form-control" />
+                    <input v-model="editForm.dien_tich" type="number" step="any" class="form-control" />
                   </div>
                   <div class="mb-3">
                     <label class="form-label">Dân số</label>
-                    <input v-model="editForm.dan_so" type="number" class="form-control" />
+                    <input v-model="editForm.dan_so" type="number" step="any" class="form-control" />
                   </div>
-                 
+
                   <div class="mb-3">
                     <label class="form-label">Mô tả</label>
                     <textarea v-model="editForm.mo_ta" class="form-control"></textarea>
@@ -189,7 +188,7 @@ const editForm = ref({
   dien_tich: 0,
   dan_so: 0,
   mo_ta: '',
-  geojson_path: ''
+ 
 });
 const viewForm = ref({
   id: null,
@@ -200,7 +199,7 @@ const viewForm = ref({
   dien_tich: 0,
   dan_so: 0,
   mo_ta: '',
-  geojson_path: ''
+  
 });
 
 const search = ref('');
@@ -268,6 +267,7 @@ const onSearch = async () => {
 
 const submitEditForm = async () => {
   try {
+    console.log("Submitting edit form:", editForm.value);
     await updateTinh(editForm.value.id, editForm.value);
     fetchTinh(currentPage.value);
     const modalEl = document.getElementById("editProvinceModal");

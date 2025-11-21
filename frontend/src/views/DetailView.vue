@@ -98,7 +98,7 @@
                 <div class="content">
                     <!-- Hiển thị video -->
                     <video controls width="600" style="max-width: 100%;">
-                        <source src="../assets/img/movie2.m4v" type="video/mp4">
+                        <source src="../assets/img/movie1.m4v" type="video/mp4">
                     </video>
                     <h2 style="text-align: center;">Vùng Đồng bằng Sông Hồng</h2>
 

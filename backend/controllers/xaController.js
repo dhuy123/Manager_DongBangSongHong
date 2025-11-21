@@ -56,6 +56,7 @@ const searchXaAll = async (req, res) => {
 
 const getXaById = async (req, res) => {
   const { id } = req.params;
+  console.log("đã vào controller xã by id", id);
   try {
     const xa = await xaModel.getXaById(id);
     res.status(200).json(xa);
@@ -89,6 +90,18 @@ const deleteXa = async (req, res) => {
   }
 }
 
+const exportGeoJson = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const geoJson = await xaModel.exportGeoJson(id);
+    res.status(200).json(geoJson);
+  } catch (error) {
+    console.error("Error exporting GeoJSON:", error);
+    res.status(500).json({ message: "Lỗi máy chủ", error: error.message });
+  }
+};  
+
+
 module.exports = {
   getAllXa,
   getPaginatedXa,
@@ -96,5 +109,6 @@ module.exports = {
   searchXaAll,
   getXaById,
   updateXa,
-  deleteXa
+  deleteXa,
+  exportGeoJson
 }

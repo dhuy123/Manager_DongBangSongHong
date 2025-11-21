@@ -43,64 +43,6 @@ thead th {
   vertical-align: middle;
 }
 
-.province-table thead th,
-.province-table thead td {
-  font-size: 14px;
-}
-
-.province-table :deep(tbody) td {
-  font-size: 14px !important;
-}
-
-.province-table th:nth-child(1) {
-  width: 50px;
-}
-
-/* STT */
-.province-table th:nth-child(2) {
-  width: 150px;
-}
-
-/* Tên tỉnh */
-.province-table th:nth-child(3) {
-  width: 100px;
-}
-
-/* Mã tỉnh */
-.province-table th:nth-child(4) {
-  width: 120px;
-}
-
-/* Quốc gia */
-.province-table th:nth-child(5) {
-  width: 130px;
-}
-
-/* Cấp hành chính */
-.province-table th:nth-child(6) {
-  width: 120px;
-}
-
-/* Diện tích */
-.province-table th:nth-child(7) {
-  width: 100px;
-}
-
-/* Dân số */
-.province-table th:nth-child(8) {
-  width: 80px;
-}
-
-/* Xem chi tiết */
-.province-table th:nth-child(9) {
-  width: 80px;
-}
-
-/* Sửa */
-.province-table th:nth-child(10) {
-  width: 80px;
-}
-
 /* Xóa */
 
 .btn-sm {

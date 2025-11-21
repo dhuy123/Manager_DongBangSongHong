@@ -8,7 +8,7 @@
       <div class="header-actions d-flex justify-content-between align-items-center mb-3">
           <h3>Danh sách các tỉnh</h3>
           <!-- <div class="action-buttons">
-            <button @click="goToUser" class="btn btn-secondary me-2">
+            <button @click="goToUser" class="btn btn-secondary me-2">al
               <i class="fas fa-map-marker-alt"></i> Map
             </button>
             <button class="btn btn-success me-2" @click="exportToCSV">Xuất CSV</button>
@@ -205,7 +205,7 @@ const fetchImgTinhData = async (ma_tinh) => {
     tinhList.value = Array.isArray(res.data) ? res.data : res;
   } catch (err) {
     console.error(err);
-    alert('Không thể tải danh sách tỉnh.');
+  
   }
 };
 

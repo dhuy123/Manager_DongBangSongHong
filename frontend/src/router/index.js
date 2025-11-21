@@ -94,8 +94,8 @@ const router = createRouter({
 })
 
 router.beforeEach((to, from, next) => {
-  const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true'
-  const role = localStorage.getItem('role')
+  const isAuthenticated = sessionStorage.getItem('isAuthenticated') === 'true'
+  const role = sessionStorage.getItem('role')
 
   const publicPages = ['user', 'login', 'register']
 
@@ -116,7 +116,7 @@ router.beforeEach((to, from, next) => {
   }
 
   // Nếu user mà vào trang admin → không cho
-  if (to.name?.startsWith('admin') && role !== 'admin/tinh') {
+  if (to.name?.startsWith('admin') && role !== 'admin') {
     return next({ name: 'user' })
   }
 

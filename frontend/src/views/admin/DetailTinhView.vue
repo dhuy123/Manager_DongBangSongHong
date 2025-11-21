@@ -57,8 +57,8 @@
                                 <span v-else>Chưa cập nhật</span>
                             </p>
                             <p>
-                                <a v-if="featureInfo.ma_tinh" :href="geoJsonUrl"
-                                    @click.prevent="downloadGeoJson(featureInfo.ma_tinh)" download>
+                                <a v-if="featureInfo.id" :href="geoJsonUrl"
+                                    @click.prevent="downloadGeoJson(featureInfo.id)" download>
                                     Tải GeoJSON
                                 </a>
                                 <span v-else>Chưa có</span>
@@ -204,9 +204,9 @@ const fetchTinhData = async () => {
     }
 };
 
-const downloadGeoJson = async (ma_tinh) => {
+const downloadGeoJson = async (id) => {
     try {
-        const blob = await exportGeoJson(ma_tinh);
+        const blob = await exportGeoJson(id);
         // Giải phóng URL cũ nếu có
         if (geoJsonUrl.value) URL.revokeObjectURL(geoJsonUrl.value);
         // Tạo URL tạm thời từ blob
@@ -214,7 +214,7 @@ const downloadGeoJson = async (ma_tinh) => {
         // Tạo click ảo để tải file
         const a = document.createElement('a');
         a.href = geoJsonUrl.value;
-        a.download = `${ma_tinh}.geojson`;
+        a.download = `${featureInfo.value.ten_tinh}.geojson`;
         document.body.appendChild(a);
         a.click();
         a.remove();

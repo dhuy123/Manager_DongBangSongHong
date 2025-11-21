@@ -34,9 +34,9 @@ const handleLogin = async () => {
       throw new Error('Không nhận được thông tin người dùng')
     }
 
-    localStorage.setItem('isAuthenticated', 'true')
-    localStorage.setItem('role', result.user.role)
-    localStorage.setItem('ho_ten', result.user.ho_ten)
+    sessionStorage.setItem('isAuthenticated', 'true')
+    sessionStorage.setItem('role', result.user.role)
+    sessionStorage.setItem('ho_ten', result.user.ho_ten)
 
     if (result.user.role === 'admin') {
       await router.push('/admin/tinh')

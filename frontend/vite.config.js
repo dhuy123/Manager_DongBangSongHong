@@ -23,4 +23,14 @@ export default defineConfig({
   //     },
   //   },
   // },
+
+  server: {
+    host: '0.0.0.0',  // Cho phép truy cập từ mạng khác / ngrok
+    port: 5173,       // Port cố định
+    strictPort: true, // Nếu port đang bận sẽ báo lỗi
+    hmr: {
+      protocol: 'ws',
+      host: 'localhost', // hoặc thay bằng URL ngrok nếu muốn HMR hoạt động từ xa
+    }
+  }
 })

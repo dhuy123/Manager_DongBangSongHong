@@ -4,6 +4,7 @@ const getAllTinh = async (req, res) => {
   try {
     const reponse = await tinhModel.getAllTinh();
     res.status(200).json(reponse);
+    console.log("Lấy tất cả tỉnh ", res.status(200).json(reponse));
   } catch (error) {
     console.error("Error fetching all provinces:", error);
     res.status(500).json({ message: "Lỗi máy chủ", error: error.message });
@@ -12,9 +13,11 @@ const getAllTinh = async (req, res) => {
 
 const getPaginatedTinh = async (req, res) => {
   const { page = 1, limit = 10 } = req.query;
+  console.log("Tạo phân trang tỉnh - trang:", page, " giới hạn:", limit);
   try {
     const result = await tinhModel.getPaginationTinh(parseInt(page), parseInt(limit));
     res.status(200).json(result);
+   // console.log("Phân trang tỉnh:", res.status(200).json(result));
   } catch (error) {
     console.error("lỗi tạo phân trang:", error);
     res.status(500).json({ message: "Lỗi máy chủ", error: error.message });
@@ -26,7 +29,7 @@ const searchTinh = async (req, res) => {
     const query = req.query.query;
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
-    console.log("🔍 Từ khóa tìm kiếm:", query);
+    console.log("Từ khóa tìm kiếm:", query);
     if (!query) {
       return res.status(400).json({ message: "Thiếu từ khóa tìm kiếm" });
     }
@@ -69,15 +72,15 @@ const updateTinh = async (req, res) => {
   const { id } = req.params;
   const data = req.body;
 
-  console.log("📦 Body nhận được:", data);
+  //console.log(" Body nhận được:", data);
 
   if (!data || Object.keys(data).length === 0) {
-    return res.status(400).json({ message: "❌ Không có dữ liệu gửi lên!" });
+    return res.status(400).json({ message: "Không có dữ liệu gửi lên!" });
   }
 
   try {
     const updatedTinh = await tinhModel.updateTinh(id, data);
-    console.log("✅ Dữ liệu cập nhật:", updatedTinh);
+    //console.log("Dữ liệu cập nhật:", updatedTinh);
 
     res.status(200).json({
       message: "Cập nhật thành công",
@@ -101,17 +104,29 @@ const deleteTinh = async (req, res) => {
 }
 
 const exportGeoJson = async (req, res) => {
-  const { ma_tinh } = req.params;
-  console.log("Xuất GeoJSON cho mã tỉnh:", ma_tinh);
+  const { id } = req.params;
+  // console.log("Xuất GeoJSON cho id:", id);
   try {
-    const geojson = await tinhModel.exportGeoJson(ma_tinh);
+    const { ten_tinh, geojson } = await tinhModel.exportGeoJson(id);
+    // console.log("geojson:", geojson.features[0]);
+    // Xử lý tên file (không dấu, không ký tự lạ)
+    const fileName =
+      (geojson?.features?.[0]?.properties?.ten_tinh || "tinh_khong_ten")
+        .normalize("NFD")  //tách chữ có dấu ra
+        .replace(/[\u0300-\u036f]/g, "")// xoá dấu
+        .replace(/\s+/g, "_")// thay khoảng trắng bằng _
+        .replace(/[^\w_]/g, "")// xoá ký tự lạ
+      + ".geojson";
+     //console.log("Tên file xuất:", fileName);
+     //console.log("dữ liệu GeoJSON chuẩn bị gửi:", geojson.features);
     // Chuyển geojson thành chuỗi JSON
     const data = JSON.stringify(geojson, null, 2);
+    console.log("Dữ liệu GeoJSON chuỗi:", data);
 
     // Cài header để trình duyệt tải file
     res.setHeader('Content-Type', 'application/json');
-    res.setHeader('Content-Disposition', `attachment; filename=${ma_tinh}.geojson`);
-    console.log("Gửi dữ liệu GeoJSON:", res.getHeaders());
+    res.setHeader('Content-Disposition', `attachment; filename=${fileName}`);
+    // console.log("Gửi dữ liệu GeoJSON:", res.getHeaders());
     // Gửi dữ liệu
     res.send(data);
   } catch (error) {

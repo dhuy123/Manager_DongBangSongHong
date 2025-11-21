@@ -48,13 +48,20 @@
                         <div v-if="featureInfo">
                             <p><strong>Tên huyện:</strong> {{ featureInfo.ten_huyen }}</p>
                             <p><strong>Mã huyện:</strong> {{ featureInfo.ma_huyen }}</p>
-                            <p><strong>Quốc gia:</strong> {{ featureInfo.quoc_gia || 'Việt Nam'}} </p>
+                            <p><strong>Tỉnh/Quốc gia:</strong> {{featureInfo.ten_tinh}}/{{ featureInfo.quoc_gia || 'Việt Nam'}} </p>
                             <p><strong>Cấp hành chính:</strong> {{ featureInfo.cap_hanh_chinh }}</p>
                             <p><strong>Diện tích:</strong> {{ featureInfo.dien_tich }} km²</p>
                             <p>
                                 <strong>Dân số:</strong>
                                 <span v-if="featureInfo.dan_so">{{ featureInfo.dan_so.toLocaleString() }} người</span>
                                 <span v-else>Chưa cập nhật</span>
+                            </p>
+                             <p>
+                                <a v-if="featureInfo.id" :href="geoJsonUrl"
+                                    @click.prevent="downloadGeoJson(featureInfo.id)" download>
+                                    Tải GeoJSON
+                                </a>
+                                <span v-else>Chưa có</span>
                             </p>
                         </div>
 
@@ -84,7 +91,7 @@
                     <p><strong>Hình ảnh:</strong></p>
                                        <div class="image-gallery">
                         <div class="image-item" v-for="(img, idx) in featureInfo?.hinh_anh_huyen" :key="idx">
-                            <img :src="img.duong_dan" :alt="img.mo_ta || 'Ảnh tỉnh'" style="cursor:pointer;"
+                            <img :src="img.duong_dan" :alt="img.mo_ta || 'Ảnh huyện'" style="cursor:pointer;"
                                  @click="openImgModal(img.duong_dan)" />
                             <p class="image-caption">{{ img.mo_ta }}</p>
                         </div>
@@ -113,11 +120,12 @@ import { useRouter, useRoute } from 'vue-router'
 const router = useRouter()
 const route = useRoute();
 
-import { getHuyenById } from '../../../utils/api/api_huyen';
+import {  getHuyenById, exportGeoJson } from '../../../utils/api/api_huyen';
 
 const showImgModal = ref(false);
 const selectedImg = ref('');
 
+const geoJsonUrl = ref('');
 const mapContainer = ref(null);
 const featureInfo = ref(null); // Sử dụng mảng để lưu thông tin từ nhiều lớp
 const activeTab = ref('info'); // Điều khiển tab
@@ -185,14 +193,14 @@ const fetchHuyenData = async () => {
     try {
         const id = route.params.id; // Lấy id từ URL
         if (!id) {
-            console.error('Không tìm thấy id tỉnh trong route params');
+            console.error('Không tìm thấy id huyện trong route params');
             return;
         }
         const response = await getHuyenById(id);
         featureInfo.value = response.data || response; // Tùy API trả về
-        console.log('Thông tin tỉnh:', featureInfo.value);
+        console.log('Thông tin huyện:', featureInfo.value);
     } catch (error) {
-        console.error('Lỗi khi lấy dữ liệu tỉnh:', error);
+        console.error('Lỗi khi lấy dữ liệu huyện:', error);
     }
 };
 const goToUserTab = () => {
@@ -209,6 +217,24 @@ const closeImgModal = () => {
   selectedImg.value = '';
 };
 
+const downloadGeoJson = async (id) => {
+    try {
+    const blob = await exportGeoJson(id);
+        // Giải phóng URL cũ nếu có
+        if (geoJsonUrl.value) URL.revokeObjectURL(geoJsonUrl.value);
+        // Tạo URL tạm thời từ blob
+        geoJsonUrl.value = URL.createObjectURL(blob);
+        // Tạo click ảo để tải file
+        const a = document.createElement('a');
+        a.href = geoJsonUrl.value;
+        a.download = `${featureInfo.value.ten_huyen}.geojson`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+    } catch (error) {
+        console.error('Lỗi tải GeoJSON:', error);
+    }
+};
 
 onMounted(() => {
     fetchHuyenData();

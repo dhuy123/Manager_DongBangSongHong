@@ -46,9 +46,9 @@
                     <div v-if="activeTab === 'info'" class="info-box">
                         <h3>Thông tin chi tiết</h3>
                         <div v-if="featureInfo">
-                            <p><strong>Tên huyện:</strong> {{ featureInfo.ten_xa }}</p>
-                            <p><strong>Mã huyện:</strong> {{ featureInfo.ma_xa }}</p>
-                            <p><strong>Quốc gia:</strong> {{ featureInfo.quoc_gia || 'Việt Nam'}} </p>
+                            <p><strong>Tên xã:</strong> {{ featureInfo.ten_xa }}</p>
+                            <p><strong>Mã xã:</strong> {{ featureInfo.ma_xa }}</p>
+                            <p><strong>Huyện/Tỉnh/Quốc gia:</strong> {{featureInfo.ten_huyen}}/{{featureInfo.ten_tinh}}/{{ featureInfo.quoc_gia || 'Việt Nam'}} </p>
                             <p><strong>Cấp hành chính:</strong> {{ featureInfo.cap_hanh_chinh }}</p>
                             <p><strong>Diện tích:</strong> {{ featureInfo.dien_tich }} km²</p>
                             <p>
@@ -56,6 +56,14 @@
                                 <span v-if="featureInfo.dan_so">{{ featureInfo.dan_so.toLocaleString() }} người</span>
                                 <span v-else>Chưa cập nhật</span>
                             </p>
+                             <p>
+                                <a v-if="featureInfo.id" :href="geoJsonUrl"
+                                    @click.prevent="downloadGeoJson(featureInfo.id)" download>
+                                    Tải GeoJSON
+                                </a>
+                                <span v-else>Chưa có</span>
+                            </p>
+
                         </div>
 
 
@@ -76,7 +84,7 @@
                     </router-link>
                 </div>
 
-                <div class="content">
+                <!-- <div class="content">
                     <h2><strong>Giới thiệu chi tiết:</strong></h2>
                     <div v-if="featureInfo && featureInfo.mo_ta" class="mo-ta"
                         v-html="featureInfo.mo_ta.replace(/\n/g, '<br>')"></div>
@@ -91,13 +99,13 @@
                         <div v-if="!featureInfo?.hinh_anh_huyen || featureInfo.hinh_anh_huyen.length === 0">
                             <em>Chưa có hình ảnh</em>
                         </div>
-                    </div>
+                    </div> -->
                     
                     <!-- Modal xem ảnh lớn -->
-                    <div v-if="showImgModal" class="img-modal" @click.self="closeImgModal">
+                    <!-- <div v-if="showImgModal" class="img-modal" @click.self="closeImgModal">
                         <img :src="selectedImg" style="max-width:90vw;max-height:90vh;display:block;margin:auto;" />
                     </div>
-                </div>
+                </div> -->
             </div>
 
         </div>
@@ -113,10 +121,12 @@ import { useRouter, useRoute } from 'vue-router'
 const router = useRouter()
 const route = useRoute();
 
-import { getXaById } from '../../../utils/api/api_xa.js';
+import { getXaById, exportGeoJson } from '../../../utils/api/api_xa.js';
 
 const showImgModal = ref(false);
 const selectedImg = ref('');
+
+const geoJsonUrl = ref('');
 
 const mapContainer = ref(null);
 const featureInfo = ref(null); // Sử dụng mảng để lưu thông tin từ nhiều lớp
@@ -181,7 +191,7 @@ const updateSelectAllStatus = () => {
     }
 };
 
-const fetchXaData = async () => {
+const fetchXaData = async (id) => {
     try {
         const id = route.params.id; // Lấy id từ URL
         if (!id) {
@@ -190,9 +200,9 @@ const fetchXaData = async () => {
         }
         const response = await getXaById(id);
         featureInfo.value = response.data || response; // Tùy API trả về
-        console.log('Thông tin tỉnh:', featureInfo.value);
+        console.log('Thông tin xã:', featureInfo.value);
     } catch (error) {
-        console.error('Lỗi khi lấy dữ liệu tỉnh:', error);
+        console.error('Lỗi khi lấy dữ liệu xã:', error);
     }
 };
 const goToUserTab = () => {
@@ -207,6 +217,24 @@ const openImgModal = (url) => {
 const closeImgModal = () => {
   showImgModal.value = false;
   selectedImg.value = '';
+};
+
+const downloadGeoJson = async (id) => {
+    try {
+        const blob= await exportGeoJson(id);
+         if (geoJsonUrl.value) URL.revokeObjectURL(geoJsonUrl.value);
+        // Tạo URL tạm thời từ blob
+        geoJsonUrl.value = URL.createObjectURL(blob);
+        // Tạo click ảo để tải file
+        const a = document.createElement('a');
+        a.href = geoJsonUrl.value;
+        a.download = `${featureInfo.value.ten_xa}.geojson`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+    } catch (error) {
+        console.error("Lỗi khi tải GeoJSON:", error);
+    }
 };
 
 

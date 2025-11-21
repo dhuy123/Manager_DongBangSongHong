@@ -324,7 +324,7 @@ const exportToCSV = async () => {
         }
         const data = Array.isArray(res) ? res : res.data || [];
         if (!data || data.length === 0) {
-            alert('Không có dữ liệu để xuất');
+            // alert('Không có dữ liệu để xuất');
             return;
         }
 
@@ -356,7 +356,7 @@ const exportToCSV = async () => {
         URL.revokeObjectURL(url);
     } catch (err) {
         console.error('Lỗi khi xuất CSV huyện:', err);
-        alert('Lỗi khi xuất CSV. Xem console để biết thêm chi tiết.');
+        // alert('Lỗi khi xuất CSV. Xem console để biết thêm chi tiết.');
     }
 };
 
@@ -370,7 +370,7 @@ const exportToPDF = async () => {
         }
         const data = Array.isArray(res) ? res : res.data || [];
         if (!data || data.length === 0) {
-            alert('Không có dữ liệu để xuất');
+            // alert('Không có dữ liệu để xuất');
             return;
         }
 
@@ -413,13 +413,17 @@ const exportToPDF = async () => {
         doc.save(`huyen_all_${now.toISOString().slice(0,10)}.pdf`);
     } catch (err) {
         console.error('Lỗi khi xuất PDF huyện:', err);
-        alert('Lỗi khi xuất PDF. Xem console để biết thêm chi tiết.');
+        // alert('Lỗi khi xuất PDF. Xem console để biết thêm chi tiết.');
     }
 };
 
 const goToImagePage = (ma_huyen) => {
     console.log('Navigating to image page for ID:', ma_huyen);
     router.push(`/admin/ImgHuyen/${ma_huyen}`);
+};
+
+const goToUser = () => {
+  router.push("/");
 };
 
 

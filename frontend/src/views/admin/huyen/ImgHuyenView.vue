@@ -149,7 +149,7 @@ const fetchImgHuyenData = async (ma_huyen) => {
     console.log('Tinh data fetched:', huyenList.value);
    } catch (err) {
     console.error(err);
-    alert('Không thể tải danh sách tỉnh.');
+    // alert('Không thể tải danh sách tỉnh.');
   }
 };
 
@@ -173,7 +173,7 @@ const openViewModal = async (tinh) => {
     viewModal?.show();
   } catch (error) {
     console.error('Error fetching Tinh data for view:', error);
-    alert('Lỗi khi xem chi tiết tỉnh.');
+    // alert('Lỗi khi xem chi tiết tỉnh.');
   }
 };
 
@@ -186,7 +186,7 @@ const openEditModal = async (tinh) => {
     editModal?.show();
   } catch (error) {
     console.error('Error fetching Tinh data for edit:', error);
-    alert('Lỗi khi mở form chỉnh sửa.');
+    // alert('Lỗi khi mở form chỉnh sửa.');
   }
 };
 

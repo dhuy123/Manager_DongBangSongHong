@@ -89,6 +89,30 @@ const deleteHuyen = async (req, res) => {
   }
 }
 
+const exportGeoJson = async (req, res) => {
+  const { id } = req.params;
+  console.log("Xuất GeoJSON huyện với ID:", id);
+  try {
+    const { ten_huyen, geojson } = await huyenModel.exportGeoJson(id);
+
+    console.log(geojson)
+    // Xử lý tên file (không dấu, không ký tự lạ)
+    const fileName = (ten_huyen || "huyen_khong_ten")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/\s+/g, "_")
+      .replace(/[^\w_]/g, "")
+      + ".geojson";
+
+    res.setHeader('Content-Disposition', `attachment; filename=${fileName}`);
+    res.setHeader('Content-Type', 'application/geo+json');
+    res.status(200).send(geojson);
+  } catch (error) {
+    console.error("lỗi xuất GeoJSON huyện:", error);
+    res.status(500).json({ message: "Lỗi máy chủ", error: error.message });
+  }
+};
+
 module.exports = {
   getAllHuyen,
   getPaginatedHuyen,
@@ -96,5 +120,6 @@ module.exports = {
   searchHuyenAll,
   getHuyenById,
   updateHuyen,
-  deleteHuyen
+  deleteHuyen,
+  exportGeoJson
 }

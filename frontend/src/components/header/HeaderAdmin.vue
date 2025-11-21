@@ -24,15 +24,15 @@ const ho_ten = ref('')
 const isAuthenticated = ref(false)
 
 onMounted(() => {
-  ho_ten.value = localStorage.getItem('ho_ten') || ''
+  ho_ten.value = sessionStorage.getItem('ho_ten') || ''
   console.log('ho_ten:', ho_ten.value)
-  isAuthenticated.value = localStorage.getItem('isAuthenticated') === 'true'
+  isAuthenticated.value = sessionStorage.getItem('isAuthenticated') === 'true'
 })
 
 const handleLogout = () => {
-  localStorage.removeItem('isAuthenticated')
-  localStorage.removeItem('role')
-  localStorage.removeItem('ho_ten')
+  sessionStorage.removeItem('isAuthenticated')
+  sessionStorage.removeItem('role')
+  sessionStorage.removeItem('ho_ten')
   isAuthenticated.value = false
   ho_ten.value = ''
   router.push({ name: 'user' }).then(() => {

@@ -118,17 +118,17 @@ const searchXaAll = async (query) => {
 };
 
 const getXaById = async (id) => {
+  console.log("đã vào model xã by id", id);
   try {
-    const result = await db.query(`SELECT t.ten_tinh, t.quoc_gia, h.ten_huyen, x.* FROM "xa" x 
-      JOIN huyen h ON x.ma_huyen = h.ma_huyen
-      JOIN tinh t ON h.ma_tinh = t.ma_tinh WHERE x.id = $1`, [id]);
+    const result = await db.query(`SELECT  x.* FROM "xa" x 
+      WHERE x.id = $1`, [id]);
     if (result.rows.length === 0) {
-      throw new Error("Province image not found");
+      throw new Error("Xã không tìm thấy");
     }
     console.log("xã tìm thấy:", result.rows[0]);
     return result.rows[0]; 
   } catch (error) {
-    console.error("Error fetching province image by ID:", error);
+    console.error("lỗi lấy xã theo id:", error);
     throw new Error("Database error");
   }
 }
@@ -149,11 +149,10 @@ const updateXa = async (id, data) => {
           ten_xa = $2,
           cap_hanh_chinh = $3,
           mo_ta = $4,
-          ma_huyen = $5
-          ma_tinh = $6
-          dan_so = $7
-          dien_tich = $8
-      WHERE id = $9
+          ma_huyen = $5,
+          dan_so = $6,
+          dien_tich = $7
+      WHERE id = $8
       RETURNING *`,
       [
         updateData.ma_xa,
@@ -161,7 +160,7 @@ const updateXa = async (id, data) => {
         updateData.cap_hanh_chinh,
         updateData.mo_ta,   
         updateData.ma_huyen,
-        updateData.ma_tinh,
+        // updateData.ma_tinh,
         updateData.dan_so,
         updateData.dien_tich,
         id
@@ -193,6 +192,40 @@ const deleteXa = async (id) => {
   }
 }
 
+const exportGeoJson = async (id) => {
+  try {
+    const result = await db.query(`
+      SELECT
+        json_build_object(
+          'type', 'FeatureCollection',
+          'features', COALESCE(json_agg(
+            json_build_object(
+              'type', 'Feature',
+              'geometry', ST_AsGeoJSON(ST_GeomFromEWKB(decode(geom, 'hex')))::json,
+              'properties', json_build_object(
+                'id', x.id,
+                'ma_xa', x.ma_xa,
+                'ten_xa', x.ten_xa,
+                'cap_hanh_chinh', x.cap_hanh_chinh,
+                'mo_ta', x.mo_ta,
+                'ma_huyen', x.ma_huyen,
+                'dan_so', x.dan_so,
+                'dien_tich', x.dien_tich
+                ))),'[]'::json)
+        ) AS json_build_object
+      FROM "xa" x
+      WHERE x.id = $1
+    `, [id]);
+    if (result.rows.length === 0) {
+      throw new Error("Xa not found");
+    }
+    return result.rows[0].json_build_object;
+  } catch (error) {
+    console.error("Error exporting GeoJSON:", error);
+    throw new Error("Database error");
+  }
+};
+
 module.exports = {
   // getAllImgXa,
   getPaginationXa,
@@ -201,7 +234,8 @@ module.exports = {
   searchXaAll,
   getXaById,
   updateXa,
-  deleteXa
+  deleteXa,
+  exportGeoJson
 };
 
 

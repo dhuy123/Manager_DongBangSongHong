@@ -83,9 +83,9 @@ export const updateHuyen = async (id, data) => {
     try {
         // Tạo bản sao và loại bỏ geom nếu có
         const payload = { ...data };
-        delete payload.geom;  // 🛑 Xoá geometry
+        delete payload.geom; 
 
-        const response = await apiInstance.put(`/huyen/${id}`, payload);
+        const response = await apiInstance.patch(`/huyen/${id}`, payload);
         console.log("Cập nhật huyện thành công:", response.data);
         return response.data; // Trả về huyện đã cập nhật
     } catch (error) {
@@ -103,6 +103,21 @@ export const deleteHuyenAPI = async (id) => {
         console.error("Error deleting district:", error);
         throw new Error("Lỗi khi xoá thông tin huyện");
     }
-}
+};
+
+export const exportGeoJson = async (id) => {
+    try {
+        console.log("Xuất GeoJSON huyện với ID (api):", id);
+        const response = await apiInstance.get(`/huyen/export-geojson/${id}`,{
+            responseType: 'blob' // Đặt responseType là 'blob' để nhận file
+        });
+        console.log("GeoJSON huyện nhận được:", response.data);
+        return response.data; // Trả về GeoJSON
+    }
+    catch (error) {
+        console.error("Error exporting district GeoJSON:", error);
+        throw new Error("Lỗi khi xuất GeoJSON huyện");
+    }
+};
 
     

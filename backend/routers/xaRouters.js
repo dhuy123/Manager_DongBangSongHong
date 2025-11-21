@@ -9,6 +9,7 @@ router.get('/all', xaController.getAllXa);
 router.get('/search/all', xaController.searchXaAll);
 router.get('/', xaController.getPaginatedXa);
 router.get('/:id', xaController.getXaById);
+router.get ('/export-geojson/:id', xaController.exportGeoJson);
 router.put('/:id', xaController.updateXa);
 router.delete('/:id', xaController.deleteXa);
 

@@ -184,9 +184,9 @@
         <!-- Bộ chọn bản đồ nền -->
         <div class="basemap-selector">
           <select v-model="selectedBasemap" @change="switchBasemap">
-            <option value="osm">OpenStreetMap</option>
-            <option value="satellite">Vệ tinh</option>
-            <option value="dark">Giao thông</option>
+            <option value="googleMap">GoogleMap</option>
+            <option value="googleSatellite">Vệ tinh</option>
+            <option value="google">Địa hình</option>
           </select>
         </div>
       </div>
@@ -242,27 +242,32 @@ const layersOpacity = ref({
 });
 
 const selectAll = ref(false);
-const selectedBasemap = ref('osm');
-
+const selectedBasemap = ref('googleMap');
 const basemaps = {
-  osm: new TileLayer({
-    source: new OSM(),
+  googleMap: new TileLayer({
+    source: new XYZ({
+      url: 'https://mt1.google.com/vt/lyrs=r&x={x}&y={y}&z={z}', // lyrs=r: roadmap
+      attributions: 'Map data ©2025 Google',
+      maxZoom: 20
+    }),
     visible: true
   }),
-  satellite: new TileLayer({
+  googleSatellite: new TileLayer({
     source: new XYZ({
-      url: 'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-      attributions: '© Esri'
+      url: 'https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', // lyrs=s: satellite
+      attributions: 'Map data ©2025 Google',
+      maxZoom: 20
     }),
     visible: false
   }),
-  dark: new TileLayer({
+  google: new TileLayer({
     source: new XYZ({
-      url: 'https://{a-c}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-      attributions: '© OpenStreetMap contributors'
+      url: 'https://mt1.google.com/vt/lyrs=h&x={x}&y={y}&z={z}', // lyrs=t: hybrid
+      attributions: 'Map data ©2025 Google',
+      maxZoom: 20
     }),
     visible: false
-  })
+  }),
 };
 
 // Hàm đổi basemap
@@ -272,7 +277,6 @@ const switchBasemap = () => {
 
 //  Hàm khởi tạo bản đồ
 const initMap = async () => {
-  //  3 lớp hành chính
   const makeLayer = (name) =>
     new TileLayer({
       source: new TileWMS({
@@ -295,7 +299,6 @@ const initMap = async () => {
   layers.dan_so_huyen = makeLayer('dan_so_huyen');
   layers.dan_so_xa = makeLayer('dan_so_xa');
 
-  // Apply initial opacities
   Object.keys(layersOpacity.value).forEach((k) => {
     if (layers[k]) layers[k].setOpacity(layersOpacity.value[k]);
   });
@@ -304,9 +307,10 @@ const initMap = async () => {
   map = new Map({
     target: 'map',
     layers: [
-      basemaps.osm,
-      basemaps.satellite,
-      basemaps.dark,
+      basemaps.googleMap,
+      basemaps.googleSatellite,
+      //basemaps.mapbox,
+      basemaps.google,
       layers.tinh,
       layers.huyen,
       layers.xa,
@@ -382,7 +386,6 @@ const initMap = async () => {
   });
 };
 
-// Handle slider input to change opacity for a named layer
 const onOpacityChange = (name, value) => {
   const v = Number(value);
   layersOpacity.value[name] = v;
@@ -391,7 +394,6 @@ const onOpacityChange = (name, value) => {
   }
 };
 
-// Watch for opacity changes from UI or programmatic updates
 watch(
   layersOpacity,
   (newVal) => {
@@ -402,13 +404,11 @@ watch(
   { deep: true }
 );
 
-// ✅ Toggle hiển thị lớp
 const toggleLayer = (name) => {
   layers[name].setVisible(layersVisibility.value[name]);
   updateSelectAllStatus();
 };
 
-// ✅ Chọn tất cả
 const toggleSelectAll = () => {
   const state = selectAll.value;
   Object.keys(layersVisibility.value).forEach(k => {
@@ -422,7 +422,7 @@ const updateSelectAllStatus = () => {
   selectAll.value = values.every(v => v);
 };
 
-// ✅ Tìm kiếm tỉnh/huyện/xã theo tên
+//  Tìm kiếm tỉnh/huyện/xã theo tên
 const getGeoserver1 = (opt) => axios.get('http://localhost:8080/geoserver/ne/ows', opt);
 
 const handleSearch = async () => {

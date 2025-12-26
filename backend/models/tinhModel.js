@@ -13,7 +13,6 @@ const getPaginationTinh = async (page = 1, limit = 10) => {
   try {
     const offset = (page - 1) * limit;
 
-    // Lấy dữ liệu phân trang
     const dataResult = await db.query(
       `SELECT * FROM "tinh"
        ORDER BY ten_tinh
@@ -21,7 +20,6 @@ const getPaginationTinh = async (page = 1, limit = 10) => {
       [limit, offset]
     );
 
-    // Lấy tổng số bản ghi để tính totalPages
     const countResult = await db.query(`SELECT COUNT(*) FROM "tinh"`);
     const totalRecords = parseInt(countResult.rows[0].count, 10);
 
@@ -214,7 +212,7 @@ const exportGeoJson = async (id) => {
       GROUP BY ten_tinh;
     `, [id]); // bind parameter, tránh SQL injection
 
-    // console.log("Kết quả truy vấn xuất GeoJSON:", result);
+    //  console.log("Kết quả truy vấn xuất GeoJSON:", result);
     if (!result.rows.length || !result.rows[0].geojson) {
       console.log("Không tìm thấy feature nào cho id:", id);
       return { ten_tinh: null, geojson: { type: "FeatureCollection", features: [] } };

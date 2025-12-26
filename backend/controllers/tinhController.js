@@ -121,7 +121,7 @@ const exportGeoJson = async (req, res) => {
      //console.log("dữ liệu GeoJSON chuẩn bị gửi:", geojson.features);
     // Chuyển geojson thành chuỗi JSON
     const data = JSON.stringify(geojson, null, 2);
-    console.log("Dữ liệu GeoJSON chuỗi:", data);
+    //console.log("Dữ liệu GeoJSON chuỗi:", data);
 
     // Cài header để trình duyệt tải file
     res.setHeader('Content-Type', 'application/json');

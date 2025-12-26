@@ -57,7 +57,7 @@ const searchAccountAll = async (req, res) => {
 
 const getAccountById = async (req, res) => {
     const { id } = req.params;
-    console.log("🔍 Lấy thông tin tài khoản với ID:", id);
+    console.log("Lấy thông tin tài khoản với ID:", id);
     try {
         const response = await accountModel.getAccountById(id);
         res.status(200).json(response);
